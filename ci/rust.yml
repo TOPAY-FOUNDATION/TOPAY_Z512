@@ -1,0 +1,126 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'rust/**'
+      - '.github/workflows/rust.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'rust/**'
+      - '.github/workflows/rust.yml'
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust: [stable, nightly]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: ${{ matrix.rust }}
+        override: true
+        components: rustfmt, clippy
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          rust/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Check formatting
+      working-directory: ./rust
+      run: cargo fmt -- --check
+
+    - name: Clippy
+      working-directory: ./rust
+      run: cargo clippy -- -D warnings
+
+    - name: Build
+      working-directory: ./rust
+      run: cargo build --verbose
+
+    - name: Run tests
+      working-directory: ./rust
+      run: cargo test --verbose
+
+    - name: Build with fragmentation feature
+      working-directory: ./rust
+      run: cargo build --verbose --features fragmentation
+
+    - name: Run tests with fragmentation feature
+      working-directory: ./rust
+      run: cargo test --verbose --features fragmentation
+
+  benchmark:
+    name: Benchmark
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          rust/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Run benchmarks
+      working-directory: ./rust
+      run: cargo bench
+
+    - name: Run benchmarks with fragmentation feature
+      working-directory: ./rust
+      run: cargo bench --features fragmentation
+
+  test-vectors:
+    name: Generate and Verify Test Vectors
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          rust/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Generate test vectors
+      working-directory: ./rust
+      run: cargo run --example generate_test_vectors
+
+    - name: Verify test vectors with fragmentation
+      working-directory: ./rust
+      run: cargo run --features fragmentation --example generate_test_vectors

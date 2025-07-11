@@ -1,11 +1,11 @@
-# pqcrypto512 Monorepo
+# topayz512 Monorepo
 
-**pqcrypto512** is a multi-language reference implementation of a post-quantum 512-bit encryption library. It includes idiomatic SDKs in Rust, Go, and JavaScript/TypeScript.
+**topayz512** is a multi-language reference implementation of a post-quantum 512-bit encryption library. It includes idiomatic SDKs in Rust, Go, and JavaScript/TypeScript.
 
 ## Repository Structure
 
 ```base tree
-pqcrypto512/                  # Root monorepo
+topayz512/                  # Root monorepo
 ├── LICENSE                    # Apache-2.0 License
 ├── README.md                  # This file
 ├── docs/                      # Shared design spec & API references

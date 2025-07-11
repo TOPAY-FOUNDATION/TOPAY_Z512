@@ -1,7 +1,7 @@
-# Project Idea: PQCrypto512
+# Project Idea: topayz512
 
 **Overview:**
-Develop a multi-language, open-source 512-bit post-quantum cryptography library—`PQCrypto512`—with implementations in Rust, Go, and JavaScript/TypeScript. This library will provide a standardized KEM based on LWE, optimized through fragmentation for mobile and embedded devices.
+Develop a multi-language, open-source 512-bit post-quantum cryptography library—`topayz512`—with implementations in Rust, Go, and JavaScript/TypeScript. This library will provide a standardized KEM based on LWE, optimized through fragmentation for mobile and embedded devices.
 
 **Key Objectives:**
 
@@ -16,7 +16,7 @@ Develop a multi-language, open-source 512-bit post-quantum cryptography library�
 
 1. **Repository Setup**
 
-   * Create the `pqcrypto512/` monorepo with root folders: `rust/`, `go/`, `js/`, `docs/`, `ci/`, `test-vectors/`.
+   * Create the `topayz512/` monorepo with root folders: `rust/`, `go/`, `js/`, `docs/`, `ci/`, `test-vectors/`.
    * Add LICENSE and README at root.
 
 2. **Design & Specification**
@@ -38,7 +38,7 @@ Develop a multi-language, open-source 512-bit post-quantum cryptography library�
 
    **Phase C – Multi-language SDKs**
 
-   * Port core routines to Go (`go/pkg/pqcrypto512/`).
+   * Port core routines to Go (`go/pkg/topayz512/`).
    * Port to JS/TS (`js/src/`).
    * Ensure all platforms pass common test vectors.
 
