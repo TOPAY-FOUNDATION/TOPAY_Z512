@@ -1,116 +1,84 @@
-# topayz512 - Rust Implementation
+# TOPAY-Z512 Rust Implementation
 
-This is the Rust implementation of the topayz512 library, a 512-bit post-quantum cryptography library based on Learning With Errors (LWE). The library provides a Key Encapsulation Mechanism (KEM) with ≥512-bit classical security and ~256-bit quantum resistance.
+This is the Rust implementation of the TOPAY-Z512 cryptographic library, providing a 512-bit post-quantum cryptography solution with support for Key Encapsulation Mechanism (KEM) and cryptographic hashing.
 
 ## Features
 
-- **High Security**: Achieves ≥512-bit classical security (~256-bit quantum resistance) using lattice-based LWE parameters.
-- **Performance**: Optimized implementation with optional fragmentation support for mobile and embedded devices.
-- **No-std Support**: Can be used in environments without the standard library.
-- **Fragmentation**: Optional feature to split large operations into smaller workloads.
+- 512-bit cryptographic hash function based on SHA3-512
+- Key Encapsulation Mechanism (KEM) based on Learning With Errors (LWE)
+- Fragmentation support for better performance on resource-constrained devices
 
 ## Installation
 
-Add the following to your `Cargo.toml`:
+Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
 topayz512 = "0.1.0"
 ```
 
-To enable the fragmentation feature:
-
-```toml
-[dependencies]
-topayz512 = { version = "0.1.0", features = ["fragmentation"] }
-```
-
 ## Usage
 
-### Basic Key Exchange
+### Hash Function
 
 ```rust
-use topayz512::{keygen, encapsulate, decapsulate};
+use topayz512::{Hash, hash, hash_combine};
 
-// Alice generates a key pair
-let (alice_pk, alice_sk) = keygen()?;
+// Create a new hash from data
+let data = b"Hello, TOPAY-Z512!";
+let hash_value = Hash::new(data);
 
-// Bob encapsulates a shared secret using Alice's public key
-let (ciphertext, bob_shared_secret) = encapsulate(&alice_pk)?;
+// Get the hash bytes
+let bytes = hash_value.as_bytes();
 
-// Alice decapsulates the shared secret using her secret key and Bob's ciphertext
-let alice_shared_secret = decapsulate(&alice_sk, &ciphertext)?;
+// Convert hash to hex string
+let hex_string = hash_value.to_hex();
 
-// Both parties now have the same shared secret
-assert_eq!(alice_shared_secret, bob_shared_secret);
+// Create hash from hex string
+let hash_from_hex = Hash::from_hex(&hex_string).unwrap();
+
+// Combine two pieces of data into a single hash
+let data1 = b"TOPAY";
+let data2 = b"Z512";
+let combined_hash = Hash::combine(data1, data2);
+
+// Convenience functions
+let hash_bytes = hash(data);
+let combined_hash_bytes = hash_combine(data1, data2);
 ```
 
-### Fragmented Key Exchange
+### Examples
 
-When the fragmentation feature is enabled:
-
-```rust
-use topayz512::fragmented::{keygen, encapsulate, decapsulate};
-
-// Number of fragments to use
-let num_fragments = 4;
-
-// Alice generates a fragmented key pair
-let (alice_pk, alice_sk) = keygen(num_fragments)?;
-
-// Bob encapsulates a shared secret using Alice's fragmented public key
-let (ciphertext, bob_shared_secret) = encapsulate(&alice_pk)?;
-
-// Alice decapsulates the shared secret using her fragmented secret key and Bob's ciphertext
-let alice_shared_secret = decapsulate(&alice_sk, &ciphertext)?;
-
-// Both parties now have the same shared secret
-assert_eq!(alice_shared_secret, bob_shared_secret);
-```
-
-## Examples
-
-The library includes several examples:
-
-- `key_exchange.rs`: Demonstrates basic key exchange.
-- `fragmented_key_exchange.rs`: Demonstrates fragmented key exchange (requires the `fragmentation` feature).
-
-To run an example:
+See the `examples` directory for more detailed examples:
 
 ```bash
-cargo run --example key_exchange
+cargo run --example hash_example
 ```
 
-Or with the fragmentation feature:
+## Testing
+
+Run the tests with:
 
 ```bash
-cargo run --features fragmentation --example fragmented_key_exchange
+cargo test
 ```
 
-## Benchmarks
+## Benchmarking
 
-To run the benchmarks:
+Run the benchmarks with:
 
 ```bash
 cargo bench
 ```
 
-To run the benchmarks with the fragmentation feature:
+## Documentation
+
+Generate and view the documentation with:
 
 ```bash
-cargo bench --features fragmentation
+cargo doc --open
 ```
-
-## Security Parameters
-
-The library uses the following security parameters:
-
-- **N**: 1024 (dimension of the LWE problem)
-- **Q**: 65537 (modulus for the LWE problem, 2^16 + 1)
-- **σ**: 3.2 (standard deviation for the error distribution)
-
-These parameters are designed to provide ≥512-bit classical security and ~256-bit quantum resistance.
 
 ## License
 
-This library is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the Apache-2.0 License - see the [LICENSE](../LICENSE) file for details.

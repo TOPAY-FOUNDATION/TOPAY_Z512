@@ -31,7 +31,3 @@ fragmentation = []
 name = "topayz512"
 path = "src/lib.rs"
 crate-type = ["rlib", "cdylib"]
-
-[[bench]]
-name = "kem_bench"
-harness = false

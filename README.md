@@ -1,6 +1,6 @@
 # topayz512 Monorepo
 
-**topayz512** is a multi-language reference implementation of a post-quantum 512-bit encryption library. It includes idiomatic SDKs in Rust, Go, and JavaScript/TypeScript.
+**topayz512** is a multi-language reference implementation of a post-quantum 512-bit encryption library. It includes idiomatic SDKs in Rust, Go, and JavaScript/TypeScript with support for Key Encapsulation Mechanism (KEM), cryptographic hashing, and key pair generation.
 
 ## Repository Structure
 
@@ -10,13 +10,15 @@ topayz512/                  # Root monorepo
 ├── README.md                  # This file
 ├── docs/                      # Shared design spec & API references
 │   ├── design_spec.md
-│   └── api_reference.md
+│   ├── api_reference.md
+│   └── keypair.md
 ├── ci/                        # CI workflows for each language
 │   ├── rust.yml
 │   ├── go.yml
 │   └── js.yml
 ├── test-vectors/              # Canonical test vectors & KATs
-│   └── basic.json
+│   ├── 002_hash.json
+│   └── 003_keypair.json
 ├── rust/                      # Rust implementation (Cargo project)
 │   └── ...
 ├── go/                        # Go implementation (Go module)
