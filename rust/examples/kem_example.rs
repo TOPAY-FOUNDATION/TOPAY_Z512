@@ -76,8 +76,8 @@ fn main() {
     
     for i in 0..10 {
         let (pk, sk) = Kem::keygen();
-        let (ct, ss1) = Kem::encapsulate(&pk);
-        let ss2 = Kem::decapsulate(&sk, &ct);
+        let (ct, _ss1) = Kem::encapsulate(&pk);
+        let _ss2 = Kem::decapsulate(&sk, &ct);
         
         if i == 0 {
             println!("   First operation completed successfully");

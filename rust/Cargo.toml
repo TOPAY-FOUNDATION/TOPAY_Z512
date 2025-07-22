@@ -13,6 +13,7 @@ categories = ["cryptography", "no-std"]
 default = ["std"]
 std = []
 fragmentation = []
+benchmark = ["std"]
 
 [dependencies]
 # Using simpler dependencies to avoid linker issues
@@ -37,3 +38,7 @@ path = "examples/kem_example.rs"
 [[example]]
 name = "keypair_example"
 path = "examples/keypair_example.rs"
+
+[[example]]
+name = "performance_benchmark"
+path = "examples/performance_benchmark.rs"

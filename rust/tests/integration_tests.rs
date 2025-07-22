@@ -5,7 +5,7 @@
 use topayz512::{KeyPair, PrivateKey, PublicKey, Hash, Kem};
 
 #[cfg(feature = "fragmentation")]
-use topayz512::FragmentEngine;
+use topayz512::fragment::FragmentEngine;
 
 #[test]
 fn test_complete_workflow() {

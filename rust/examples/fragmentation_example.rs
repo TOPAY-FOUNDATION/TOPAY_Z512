@@ -23,7 +23,7 @@ fn main() -> Result<()> {
         
         for (i, fragment) in fragments.iter().enumerate() {
             println!("   Fragment {}: {} bytes, hash: {}", 
-                     i, fragment.size(), fragment.hash.to_hex()[..16]);
+                     i, fragment.size(), &fragment.hash.to_hex()[..16]);
         }
         println!();
 
@@ -48,12 +48,12 @@ fn main() -> Result<()> {
 
         // Example 4: KEM fragmentation
         println!("4. KEM Fragmentation:");
-        let (public_key, _secret_key) = Kem::keygen()?;
+        let (public_key, _secret_key) = Kem::keygen();
         let fragmented_kem = FragmentEngine::fragment_kem_encapsulation(&public_key)?;
         
         println!("   KEM public key size: {} bytes", public_key.as_bytes().len());
         println!("   Number of KEM fragments: {}", fragmented_kem.fragments.len());
-        println!("   Combined hash: {}", fragmented_kem.combined_hash.to_hex()[..32]);
+        println!("   Combined hash: {}", &fragmented_kem.combined_hash.to_hex()[..32]);
         
         let processed_data = FragmentEngine::process_fragmented_kem(&fragmented_kem)?;
         println!("   Processed data size: {} bytes", processed_data.len());
@@ -68,7 +68,7 @@ fn main() -> Result<()> {
         println!("   Hash fragments: {}", fragmented_hash.fragments.len());
         
         let parallel_hash = FragmentEngine::parallel_hash_compute(&fragmented_hash)?;
-        println!("   Parallel hash result: {}", parallel_hash.to_hex()[..32]);
+        println!("   Parallel hash result: {}", &parallel_hash.to_hex()[..32]);
         println!();
 
         // Example 6: Mobile performance estimation
