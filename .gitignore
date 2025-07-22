@@ -1,0 +1,277 @@
+# TOPAY-Z512 Monorepo .gitignore
+# Post-quantum cryptography library for Rust, Go, and JavaScript/TypeScript
+
+# =============================================================================
+# RUST SPECIFIC
+# =============================================================================
+
+# Rust build artifacts
+rust/target/
+rust/Cargo.lock
+rust/**/*.rs.bk
+rust/**/target/
+
+# Rust debug files
+rust/**/*.pdb
+
+# Rust documentation
+rust/doc/
+
+# Rust benchmark results
+rust/criterion/
+
+# =============================================================================
+# GO SPECIFIC
+# =============================================================================
+
+# Go build artifacts
+go/bin/
+go/pkg/
+go/*.exe
+go/*.exe~
+go/*.dll
+go/*.so
+go/*.dylib
+
+# Go test binary, built with `go test -c`
+go/*.test
+
+# Go output of the go coverage tool
+go/*.out
+
+# Go dependency directories
+go/vendor/
+
+# Go module download cache
+go/go.sum
+
+# =============================================================================
+# JAVASCRIPT/TYPESCRIPT SPECIFIC
+# =============================================================================
+
+# Node.js dependencies
+js/node_modules/
+js/npm-debug.log*
+js/yarn-debug.log*
+js/yarn-error.log*
+js/lerna-debug.log*
+
+# JavaScript/TypeScript build outputs
+js/dist/
+js/build/
+js/lib/
+js/coverage/
+js/.nyc_output/
+
+# TypeScript cache
+js/*.tsbuildinfo
+
+# JavaScript package manager files
+js/package-lock.json
+js/yarn.lock
+
+# =============================================================================
+# CRYPTOGRAPHIC & SECURITY
+# =============================================================================
+
+# Private keys and certificates (NEVER commit these!)
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+
+# Cryptographic test vectors (if sensitive)
+**/test_vectors/private/
+**/secrets/
+**/private_keys/
+
+# =============================================================================
+# DEVELOPMENT TOOLS
+# =============================================================================
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+*.backup
+
+# =============================================================================
+# BUILD & CI/CD
+# =============================================================================
+
+# Build directories
+build/
+dist/
+out/
+
+# CI/CD artifacts
+.github/workflows/artifacts/
+ci/artifacts/
+ci/reports/
+
+# Docker
+.dockerignore
+Dockerfile.tmp
+
+# =============================================================================
+# DOCUMENTATION & REPORTS
+# =============================================================================
+
+# Generated documentation
+docs/generated/
+docs/api/generated/
+
+# Test reports
+test-results/
+coverage-reports/
+benchmark-results/
+
+# Performance profiling
+*.prof
+*.trace
+
+# =============================================================================
+# PLATFORM SPECIFIC
+# =============================================================================
+
+# Windows
+*.exe
+*.msi
+*.msm
+*.msp
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# =============================================================================
+# ENVIRONMENT & CONFIGURATION
+# =============================================================================
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Configuration files with secrets
+config/secrets.toml
+config/private.json
+*.secret
+
+# =============================================================================
+# QUANTUM CRYPTOGRAPHY SPECIFIC
+# =============================================================================
+
+# Large test data files
+**/large_test_data/
+**/performance_data/
+**/benchmark_data/
+
+# Generated key material for testing
+**/generated_keys/
+**/test_keys/
+**/sample_keys/
+
+# Fragmentation test files
+**/fragment_test_data/
+**/large_fragments/
+
+# =============================================================================
+# MISC
+# =============================================================================
+
+# Compressed files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
