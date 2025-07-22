@@ -1,0 +1,64 @@
+TOPAY Foundation Pitch Deck
+Version: 1.1 (Security Enhanced, July 2025)
+1. Welcome to TOPAY
+Imagine a world where your money moves instantly and securely, where a simple mistake—sending funds
+to the wrong address—can be undone, and where quantum computers no longer threaten your savings.
+TOPAY Foundation is building a blockchain ecosystem that’s fast, transparent, quantum-safe, and humancentered.
+2. Why Change Is Overdue
+Quantum Risk: Classical cryptography (ECC) is vulnerable to future quantum attacks.
+Hidden Fees: Users face unpredictable charges and long waits for confirmations.
+Irreversible Errors: No safety net for mistaken transfers.
+Enterprise Friction: Lack of seamless crypto-native payment rails.
+3. Our Human-Centered Solution
+Quantum-Resistant Security: Custom 510‑bit lattice encryption to withstand quantum threats.
+Reversible Transactions: Community-driven rollback feature to correct mistakes.
+Transparent, Fair Fees: Small, fixed percentage fees visible on-chain.
+Fragmented-Block Architecture: Parallel fragments allow devices from smartphones to IoT to keep
+up.
+Developer-Friendly SDK: One-line integration for payments, refunds, and real-time monitoring.
+4. Security & Consensus (NEW)
+Proof-of-Stake (PoS) + BFT Consensus: Validators must stake TPY tokens and participate in
+supermajority voting to finalize new blocks—ensuring network integrity, instant finality, and slashing
+of dishonest actors.
+Quantum-Safe by Design: All signatures and validator votes use lattice-based encryption for
+resilience against quantum attacks.
+Economic Penalties for Bad Actors: Slashing and governance allow rapid removal of malicious
+validators, protecting users and the network.
+5. Real-World Impact
+40% Higher Throughput: Parallel fragments deliver faster settlements than legacy chains.
+15-Minute Error Recovery: Pilot reversed a 100 TPY mistake in under 15 minutes.
+50% Dev Time Saved: Partners cut payment integration time in half with our SDK.
+6. Tokenomics
+Token Name: TOPAY (TPY)
+Total Max Supply: 2,000,000,000 TPY
+Utility: Payment rail, staking for security, governance voting, ecosystem incentives
+Initial Circulating Supply: 50% (1,000,000,000 TPY)
+Airdrop: 5%
+Public Sale: 5%
+Private Sale: 10%
+Liquidity & Exchanges: 7.5%
+Grants & Partnerships: 7.5%
+Team & Advisors: 7.5%
+Remaining Supply: 50% (1,000,000,000 TPY)
+Foundation & Ecosystem: 30%
+Community Rewards: 15%
+Reserve: 5%
+7. Governance
+Quorum: 5% of circulating TPY
+Standard Votes: ≥50%
+Critical Upgrades: ≥66%
+DAO-controlled treasury for ongoing growth and resilience
+8. Roadmap
+Mid-2025: R&D complete, SDK launch, community grants kickoff
+Early-2026: Testnet live, security audits, pilot merchants onboard
+Late-2026: Public rollback testing, governance charter finalized
+Early-2027: Mainnet launch with staking incentives and merchant network
+End-2027: 100+ countries supported, 3B mobile nodes active
+9. Team & Advisors
+Core Team: Cryptographers, payment veterans, blockchain engineers
+Advisors: Quantum security & fintech leaders
+10. Call to Action
+Developers, validators, merchants, investors: Join us in building a future where finance is fast, fair, and
+fearless.
+Website: www.TOPAYFOUNDATION.com
+Contact: contact@topayfoundation.com

@@ -2,32 +2,45 @@
 name = "topayz512"
 version = "0.1.0"
 edition = "2021"
-authors = ["TOPAY FOUNDATION"]
-description = "A 512-bit post-quantum cryptography library based on LWE"
-license = "MIT"
+authors = ["TOPAY Foundation <contact@topayfoundation.com>"]
+description = "TOPAY-Z512: Quantum-safe 512-bit post-quantum cryptographic library"
+license = "Apache-2.0"
 repository = "https://github.com/topay-foundation/topayz512"
-keywords = ["cryptography", "post-quantum", "kem", "lwe"]
+keywords = ["cryptography", "post-quantum", "kem", "lattice", "blockchain"]
 categories = ["cryptography", "no-std"]
-
-[dependencies]
-rand = "0.8"
-rand_chacha = "0.3"
-byteorder = "1.4"
-zeroize = { version = "1.5", features = ["zeroize_derive"] }
-thiserror = "1.0"
-sha3 = "0.10"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-
-[dev-dependencies]
-criterion = "0.4"
 
 [features]
 default = ["std"]
-std = []
+std = ["sha3/std", "rand/std"]
 fragmentation = []
+
+[dependencies]
+sha3 = { version = "0.10", default-features = false }
+rand = { version = "0.8", default-features = false }
+rand_core = { version = "0.6", default-features = false }
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
+serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
+
+[dev-dependencies]
+criterion = "0.5"
+serde_json = "1.0"
+
+[[bench]]
+name = "benchmarks"
+harness = false
 
 [lib]
 name = "topayz512"
 path = "src/lib.rs"
-crate-type = ["rlib", "cdylib"]
+
+[[example]]
+name = "hash_example"
+path = "examples/hash_example.rs"
+
+[[example]]
+name = "kem_example"
+path = "examples/kem_example.rs"
+
+[[example]]
+name = "keypair_example"
+path = "examples/keypair_example.rs"
