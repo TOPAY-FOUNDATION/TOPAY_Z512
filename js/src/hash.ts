@@ -128,6 +128,16 @@ export class Hash {
   toString(): string {
     return this.toHex();
   }
+
+  /**
+   * Creates a new hash using the current time as input
+   * This is useful for generating random-like hashes when no specific input is available
+   * @returns A new Hash instance
+   */
+  static newWithTime(): Hash {
+    const timeData = Date.now().toString();
+    return Hash.new(timeData);
+  }
 }
 
 /**
@@ -147,4 +157,21 @@ export function hash(data: Uint8Array | string): Uint8Array {
  */
 export function hashCombine(data1: Uint8Array | string, data2: Uint8Array | string): Uint8Array {
   return Hash.combine(data1, data2).getBytes();
+}
+
+/**
+ * Creates a new hash using the current time as input
+ * This is useful for generating random-like hashes when no specific input is available
+ * @returns A new Hash instance
+ */
+export function newWithTime(): Hash {
+  return Hash.newWithTime();
+}
+
+/**
+ * A convenience function to hash using the current time
+ * @returns The hash bytes
+ */
+export function hashWithTime(): Uint8Array {
+  return newWithTime().getBytes();
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"time"
 
 	"golang.org/x/crypto/sha3"
 )
@@ -79,4 +80,16 @@ func Sum512(data []byte) [HashSizeBytes]byte {
 // SumCombine is a convenience function to hash two pieces of data together
 func SumCombine(data1, data2 []byte) [HashSizeBytes]byte {
 	return Combine(data1, data2)
+}
+
+// NewWithTime creates a new hash using the current time as input
+// This is useful for generating random-like hashes when no specific input is available
+func NewWithTime() Hash {
+	timeBytes := []byte(fmt.Sprintf("%d", time.Now().UnixNano()))
+	return New(timeBytes)
+}
+
+// Sum512WithTime is a convenience function to hash using the current time
+func Sum512WithTime() [HashSizeBytes]byte {
+	return NewWithTime()
 }

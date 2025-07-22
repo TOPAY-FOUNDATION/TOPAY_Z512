@@ -22,7 +22,7 @@ yarn add topayz512
 ### Hash Function
 
 ```typescript
-import { Hash, hash, hashCombine } from 'topayz512';
+import { Hash, hash, hashCombine, newWithTime, hashWithTime } from 'topayz512';
 
 // Create a new hash from data
 const data = 'Hello, TOPAY-Z512!';
@@ -49,6 +49,11 @@ const combinedHashBytes = hashCombine(data1, data2);
 // Binary data
 const binaryData = new Uint8Array([0, 1, 2, 3, 4, 5]);
 const binaryHash = Hash.new(binaryData);
+
+// Time-based hashing (useful for generating random-like hashes)
+const timeHash = Hash.newWithTime();
+const timeHashObj = newWithTime();
+const timeHashBytes = hashWithTime();
 ```
 
 ### Examples

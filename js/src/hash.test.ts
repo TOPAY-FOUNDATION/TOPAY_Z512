@@ -1,5 +1,5 @@
 import { Hash, hash, hashCombine, HASH_SIZE_BYTES } from './hash';
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, it, jest } from '@jest/globals';
 
 describe('Hash', () => {
   test('hash size should be correct', () => {

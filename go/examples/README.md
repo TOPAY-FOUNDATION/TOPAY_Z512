@@ -5,8 +5,9 @@ This directory contains example code demonstrating how to use the TOPAY-Z512 lib
 ## Examples
 
 1. **Hash Example** - Demonstrates the hash functionality
-2. **Key Pair Example** - Demonstrates key pair generation and usage
-3. **Private to Public Key Conversion Example** - Demonstrates how to convert a private key to a public key
+2. **Time-based Hash Example** - Demonstrates time-based hash generation
+3. **Key Pair Example** - Demonstrates key pair generation and usage
+4. **Private to Public Key Conversion Example** - Demonstrates how to convert a private key to a public key
 
 ## Running the Examples
 

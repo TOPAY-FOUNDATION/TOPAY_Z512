@@ -35,8 +35,9 @@ func showMenu() {
 	fmt.Println("=================")
 	fmt.Println("Please select an example to run:")
 	fmt.Println("1. Hash Example")
-	fmt.Println("2. Key Pair Example")
-	fmt.Println("3. Private to Public Key Conversion Example")
+	fmt.Println("2. Time-based Hash Example")
+	fmt.Println("3. Key Pair Example")
+	fmt.Println("4. Private to Public Key Conversion Example")
 	fmt.Println("0. Exit")
 	fmt.Print("\nEnter your choice: ")
 
@@ -59,8 +60,10 @@ func runExample(choice int) {
 	case 1:
 		Run()
 	case 2:
-		RunKeypair()
+		RunTimeHash()
 	case 3:
+		RunKeypair()
+	case 4:
 		RunPrivateToPublic()
 	default:
 		fmt.Printf("Invalid choice: %d\n", choice)
@@ -73,6 +76,7 @@ func printUsage() {
 	fmt.Println("  go run main.go [example_number]")
 	fmt.Println("\nExample numbers:")
 	fmt.Println("  1 - Hash Example")
-	fmt.Println("  2 - Key Pair Example")
-	fmt.Println("  3 - Private to Public Key Conversion Example")
+	fmt.Println("  2 - Time-based Hash Example")
+	fmt.Println("  3 - Key Pair Example")
+	fmt.Println("  4 - Private to Public Key Conversion Example")
 }

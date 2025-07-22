@@ -48,6 +48,10 @@ combinedHash := hash.Combine(data1, data2)
 // Convenience functions
 hashBytes := hash.Sum512(data)
 combinedHashBytes := hash.SumCombine(data1, data2)
+
+// Time-based hashing (useful for generating random-like hashes)
+timeHash := hash.NewWithTime()
+timeHashBytes := hash.Sum512WithTime()
 ```
 
 ## Running the Examples

@@ -3,7 +3,7 @@
  */
 
 import { KeyPair, PrivateKey, PublicKey, KEY_SIZE_BYTES, generateKeyPair } from './keypair';
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
 
 describe('KeyPair', () => {
   describe('generation', () => {

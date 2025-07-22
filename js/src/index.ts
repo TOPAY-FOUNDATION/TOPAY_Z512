@@ -9,6 +9,7 @@
 // Export modules
 export * from './hash';
 export * from './keypair';
+export * from './kem';
 
 // Library version information
 export const VERSION = '0.1.0';
