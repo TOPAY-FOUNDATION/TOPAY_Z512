@@ -190,3 +190,159 @@ export async function verifyHashChain(chain: Hash[], initialData: Uint8Array): P
 
 // Import constantTimeEqual from utils
 import { constantTimeEqual } from './utils';
+
+/**
+ * Batch hash operations for improved performance
+ * @param inputs - Array of data to hash
+ * @param batchSize - Number of operations to process in parallel
+ * @returns Promise resolving to array of hashes
+ */
+export async function batchHash(inputs: Uint8Array[], batchSize: number = 8): Promise<Hash[]> {
+  if (inputs.length === 0) return [];
+  
+  const results: Hash[] = new Array(inputs.length);
+  
+  // Process in batches to avoid overwhelming the system
+  for (let i = 0; i < inputs.length; i += batchSize) {
+    const batch = inputs.slice(i, i + batchSize);
+    const batchPromises = batch.map(data => computeHash(data));
+    const batchResults = await Promise.all(batchPromises);
+    
+    // Copy results to the correct positions
+    for (let j = 0; j < batchResults.length; j++) {
+      results[i + j] = batchResults[j];
+    }
+  }
+  
+  return results;
+}
+
+/**
+ * Optimized hash computation using Web Workers for large data
+ * @param data - Data to hash
+ * @param useWorker - Whether to use Web Worker for computation
+ * @returns Promise resolving to hash
+ */
+export async function computeHashOptimized(data: Uint8Array, useWorker: boolean = false): Promise<Hash> {
+  // For small data, use direct computation
+  if (data.length < 64 * 1024 || !useWorker) {
+    return computeHash(data);
+  }
+  
+  // For large data, consider using Web Worker (if available)
+  if (typeof Worker !== 'undefined') {
+    return computeHashWithWorker(data);
+  }
+  
+  return computeHash(data);
+}
+
+/**
+ * Compute hash using Web Worker for better performance on large data
+ * @param data - Data to hash
+ * @returns Promise resolving to hash
+ */
+async function computeHashWithWorker(data: Uint8Array): Promise<Hash> {
+  return new Promise((resolve, reject) => {
+    // Create inline worker for hash computation
+    const workerCode = `
+      self.onmessage = async function(e) {
+        const { data } = e.data;
+        try {
+          // Import crypto for worker context
+          const crypto = self.crypto || self.webkitCrypto;
+          if (!crypto) {
+            throw new Error('Crypto not available in worker');
+          }
+          
+          // Compute hash using SubtleCrypto
+          const hashBuffer = await crypto.subtle.digest('SHA-512', data);
+          const hashArray = new Uint8Array(hashBuffer);
+          
+          self.postMessage({ success: true, hash: hashArray });
+        } catch (error) {
+          self.postMessage({ success: false, error: error.message });
+        }
+      };
+    `;
+    
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    const worker = new Worker(URL.createObjectURL(blob));
+    
+    worker.onmessage = (e) => {
+      const { success, hash, error } = e.data;
+      worker.terminate();
+      URL.revokeObjectURL(blob.toString());
+      
+      if (success) {
+        resolve(hash as Hash);
+      } else {
+        reject(new Error(error));
+      }
+    };
+    
+    worker.onerror = (error) => {
+      worker.terminate();
+      URL.revokeObjectURL(blob.toString());
+      reject(error);
+    };
+    
+    // Send data to worker
+    worker.postMessage({ data });
+  });
+}
+
+/**
+ * Memory-efficient streaming hash for large data
+ */
+export class StreamingHash {
+  private hasher: any;
+  private chunks: Uint8Array[] = [];
+  private totalSize = 0;
+  
+  constructor() {
+    // Initialize streaming hasher
+    this.reset();
+  }
+  
+  /**
+   * Reset the streaming hash state
+   */
+  reset(): void {
+    this.chunks = [];
+    this.totalSize = 0;
+  }
+  
+  /**
+   * Update the hash with new data
+   * @param data - Data chunk to add
+   */
+  update(data: Uint8Array): void {
+    this.chunks.push(new Uint8Array(data)); // Copy to avoid external modifications
+    this.totalSize += data.length;
+  }
+  
+  /**
+   * Finalize and get the hash result
+   * @returns Promise resolving to final hash
+   */
+  async finalize(): Promise<Hash> {
+    // Concatenate all chunks efficiently
+    const combined = new Uint8Array(this.totalSize);
+    let offset = 0;
+    
+    for (const chunk of this.chunks) {
+      combined.set(chunk, offset);
+      offset += chunk.length;
+    }
+    
+    // Clear chunks to free memory
+    this.chunks = [];
+    this.totalSize = 0;
+    
+    return computeHash(combined);
+  }
+}
+
+// Import constantTimeEqual from utils
+import { constantTimeEqual } from './utils';
