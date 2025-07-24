@@ -46,10 +46,7 @@ fn main() {
     // Step 4: Verification
     println!("Step 4: Verification");
     let secrets_match = alice_shared_secret.to_bytes() == bob_shared_secret.to_bytes();
-    println!(
-        "   🤝 Alice and Bob have the same secret: {}",
-        secrets_match
-    );
+    println!("   🤝 Alice and Bob have the same secret: {secrets_match}");
     println!("   🔒 They can now use this secret for secure communication!\n");
 
     println!("📊 TECHNICAL DETAILS:");

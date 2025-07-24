@@ -223,15 +223,15 @@ fn test_performance_characteristics() {
 
     // Hash operations should be fast
     for i in 0..100 {
-        let data = format!("test data {}", i);
+        let data = format!("test data {i}");
         let _ = Hash::new(data.as_bytes());
     }
     let hash_time = start.elapsed();
 
     println!("Performance test results:");
-    println!("  10 keypair generations: {:?}", keypair_time);
-    println!("  5 complete KEM cycles: {:?}", kem_time);
-    println!("  100 hash operations: {:?}", hash_time);
+    println!("  10 keypair generations: {keypair_time:?}");
+    println!("  5 complete KEM cycles: {kem_time:?}");
+    println!("  100 hash operations: {hash_time:?}");
 
     // Ensure operations are reasonably fast (these are generous limits)
     assert!(keypair_time.as_millis() < 1000); // 1 second for 10 operations
@@ -252,14 +252,14 @@ fn test_memory_safety() {
 
     // Many small operations
     for i in 0..1000 {
-        let data = format!("iteration {}", i);
+        let data = format!("iteration {i}");
         let _hash = Hash::new(data.as_bytes());
     }
 
     // Nested operations
     let mut current_hash = Hash::new(b"start");
     for i in 0..100 {
-        let data = format!("round {}", i);
+        let data = format!("round {i}");
         current_hash = Hash::combine(&current_hash.to_bytes(), data.as_bytes());
     }
 

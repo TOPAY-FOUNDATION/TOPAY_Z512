@@ -54,8 +54,8 @@ fn main() {
     // Example 4: Hex serialization and deserialization
     println!("4. Hex Serialization:");
     let (private_hex, public_hex) = keypair.to_hex();
-    println!("   Private Hex: {}", private_hex);
-    println!("   Public Hex:  {}", public_hex);
+    println!("   Private Hex: {private_hex}");
+    println!("   Public Hex:  {public_hex}");
 
     let private_restored = PrivateKey::from_hex(&private_hex).unwrap();
     let public_restored = PublicKey::from_hex(&public_hex).unwrap();
@@ -116,7 +116,7 @@ fn main() {
             }
         }
     }
-    println!("   All private keys different: {}", all_different);
+    println!("   All private keys different: {all_different}");
     println!();
 
     // Example 7: Key recovery test
@@ -160,7 +160,7 @@ fn main() {
     }
 
     let duration = start.elapsed();
-    println!("   100 key pair generations took: {:?}", duration);
+    println!("   100 key pair generations took: {duration:?}");
     println!("   Average per generation: {:?}", duration / 100);
     println!();
 

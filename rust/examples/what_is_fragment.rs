@@ -32,8 +32,8 @@ fn main() -> Result<()> {
     {
         // Technical details
         println!("⚙️  TECHNICAL DETAILS:");
-        println!("• Fragment size: {} bytes", FRAGMENT_SIZE);
-        println!("• Maximum fragments per operation: {}", MAX_FRAGMENTS);
+        println!("• Fragment size: {FRAGMENT_SIZE} bytes");
+        println!("• Maximum fragments per operation: {MAX_FRAGMENTS}");
         println!("• Each fragment includes integrity hash");
         println!("• Fragments can be processed independently");
         println!("• Results are combined after parallel processing\n");
@@ -54,7 +54,7 @@ fn main() -> Result<()> {
         println!("\n2️⃣  STEP 2: Break into fragments");
         let fragments = FragmentEngine::fragment_data(&large_data)?;
         println!("   🧩 Number of fragments: {}", fragments.len());
-        println!("   📏 Each fragment: ~{} bytes", FRAGMENT_SIZE);
+        println!("   📏 Each fragment: ~{FRAGMENT_SIZE} bytes");
 
         for (i, fragment) in fragments.iter().enumerate() {
             println!(
@@ -109,14 +109,14 @@ fn main() -> Result<()> {
         let parallel_time = start.elapsed();
 
         println!("   📊 Data size: {} bytes", test_data.len());
-        println!("   🐌 Sequential: {:?}", sequential_time);
-        println!("   🚀 Parallel: {:?}", parallel_time);
+        println!("   🐌 Sequential: {sequential_time:?}");
+        println!("   🚀 Parallel: {parallel_time:?}");
 
         if parallel_time < sequential_time {
             let improvement =
                 ((sequential_time.as_nanos() as f64 / parallel_time.as_nanos() as f64) - 1.0)
                     * 100.0;
-            println!("   📈 Improvement: {:.1}%", improvement);
+            println!("   📈 Improvement: {improvement:.1}%");
         }
 
         // Mobile device simulation

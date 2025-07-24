@@ -45,7 +45,7 @@ fn main() {
 
     // Verify they have the same secret
     let secrets_match = alice_secret.to_bytes() == bob_secret.to_bytes();
-    println!("🤝 Shared secrets match: {}", secrets_match);
+    println!("🤝 Shared secrets match: {secrets_match}");
     println!("   Alice's secret: {}", alice_secret.to_hex());
     println!("   Bob's secret:   {}\n", bob_secret.to_hex());
 

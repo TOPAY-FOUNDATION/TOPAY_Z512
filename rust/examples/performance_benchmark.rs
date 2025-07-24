@@ -2,7 +2,7 @@
 //!
 //! This example demonstrates the performance improvements achieved through optimization.
 
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use topayz512::*;
 
 #[cfg(feature = "fragmentation")]
@@ -49,8 +49,7 @@ fn benchmark_hash_operations() {
         let throughput = (size as f64 * iterations as f64) / elapsed.as_secs_f64() / 1_000_000.0;
 
         println!(
-            "   {} bytes: {:?} per hash, {:.2} MB/s throughput",
-            size, per_op, throughput
+            "   {size} bytes: {per_op:?} per hash, {throughput:.2} MB/s throughput"
         );
     }
 
@@ -72,8 +71,8 @@ fn benchmark_hash_operations() {
     }
     let from_hex_time = start.elapsed() / iterations;
 
-    println!("   Hex encoding: {:?} per operation", hex_time);
-    println!("   Hex decoding: {:?} per operation", from_hex_time);
+    println!("   Hex encoding: {hex_time:?} per operation");
+    println!("   Hex decoding: {from_hex_time:?} per operation");
     println!();
 }
 
@@ -97,8 +96,8 @@ fn benchmark_key_operations() {
     }
     let batch_time = start.elapsed() / (batches * batch_size) as u32;
 
-    println!("   Single key generation: {:?} per keypair", single_time);
-    println!("   Batch key generation: {:?} per keypair", batch_time);
+    println!("   Single key generation: {single_time:?} per keypair");
+    println!("   Batch key generation: {batch_time:?} per keypair");
     println!(
         "   Batch improvement: {:.2}x faster",
         single_time.as_nanos() as f64 / batch_time.as_nanos() as f64
@@ -114,8 +113,7 @@ fn benchmark_key_operations() {
     let derivation_time = start.elapsed() / iterations;
 
     println!(
-        "   Public key derivation: {:?} per operation",
-        derivation_time
+        "   Public key derivation: {derivation_time:?} per operation"
     );
     println!();
 }
@@ -157,10 +155,10 @@ fn benchmark_kem_operations() {
     }
     let batch_keygen_time = start.elapsed() / (batches * batch_size) as u32;
 
-    println!("   KEM keygen: {:?} per operation", keygen_time);
-    println!("   KEM encapsulate: {:?} per operation", encap_time);
-    println!("   KEM decapsulate: {:?} per operation", decap_time);
-    println!("   Batch keygen: {:?} per operation", batch_keygen_time);
+    println!("   KEM keygen: {keygen_time:?} per operation");
+    println!("   KEM encapsulate: {encap_time:?} per operation");
+    println!("   KEM decapsulate: {decap_time:?} per operation");
+    println!("   Batch keygen: {batch_keygen_time:?} per operation");
     println!(
         "   Batch improvement: {:.2}x faster",
         keygen_time.as_nanos() as f64 / batch_keygen_time.as_nanos() as f64
@@ -214,8 +212,7 @@ fn benchmark_fragmentation_operations() {
             / 1_000_000.0;
 
         println!(
-            "   {} bytes: frag={:?}, recon={:?}, ser={:?}, deser={:?}, {:.2} MB/s",
-            size, frag_time, recon_time, ser_time, deser_time, throughput
+            "   {size} bytes: frag={frag_time:?}, recon={recon_time:?}, ser={ser_time:?}, deser={deser_time:?}, {throughput:.2} MB/s"
         );
     }
 
@@ -223,7 +220,7 @@ fn benchmark_fragmentation_operations() {
     println!("   Mobile latency estimates:");
     for &size in &[1000, 5000, 10000, 50000] {
         let latency = FragmentEngine::estimate_mobile_latency(size);
-        println!("     {} bytes: {}ms", size, latency);
+        println!("     {size} bytes: {latency}ms");
     }
     println!();
 }
@@ -244,16 +241,13 @@ fn benchmark_feature_detection() {
     let thread_time = start.elapsed();
 
     println!(
-        "   SIMD support: {} (detected in {:?})",
-        has_simd, simd_time
+        "   SIMD support: {has_simd} (detected in {simd_time:?})"
     );
     println!(
-        "   Hardware RNG: {} (detected in {:?})",
-        has_hw_rng, rng_time
+        "   Hardware RNG: {has_hw_rng} (detected in {rng_time:?})"
     );
     println!(
-        "   Optimal threads: {} (detected in {:?})",
-        thread_count, thread_time
+        "   Optimal threads: {thread_count} (detected in {thread_time:?})"
     );
 
     // Utility function benchmarks
@@ -274,8 +268,8 @@ fn benchmark_feature_detection() {
     }
     let neq_time = start.elapsed() / iterations;
 
-    println!("   Constant-time equality (equal): {:?}", eq_time);
-    println!("   Constant-time equality (different): {:?}", neq_time);
+    println!("   Constant-time equality (equal): {eq_time:?}");
+    println!("   Constant-time equality (different): {neq_time:?}");
 
     // Hex encoding benchmark
     let data = [0x12, 0x34, 0xab, 0xcd, 0xef];
@@ -292,7 +286,7 @@ fn benchmark_feature_detection() {
     }
     let hex_decode_time = start.elapsed() / iterations;
 
-    println!("   Fast hex encode: {:?}", hex_encode_time);
-    println!("   Fast hex decode: {:?}", hex_decode_time);
+    println!("   Fast hex encode: {hex_encode_time:?}");
+    println!("   Fast hex decode: {hex_decode_time:?}");
     println!();
 }

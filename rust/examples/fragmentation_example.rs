@@ -98,8 +98,7 @@ fn main() -> Result<()> {
             let latency = FragmentEngine::estimate_mobile_latency(*size);
             let should_fragment = FragmentEngine::should_fragment(*size);
             println!(
-                "   {} bytes: {}ms latency, fragment: {}",
-                size, latency, should_fragment
+                "   {size} bytes: {latency}ms latency, fragment: {should_fragment}"
             );
         }
         println!();
@@ -122,13 +121,13 @@ fn main() -> Result<()> {
             let reconstructed = FragmentEngine::reconstruct_data(&fragments)?;
             let reconstruct_time = start.elapsed();
 
-            println!("   Fragmentation time: {:?}", fragment_time);
-            println!("   Reconstruction time: {:?}", reconstruct_time);
+            println!("   Fragmentation time: {fragment_time:?}");
+            println!("   Reconstruction time: {reconstruct_time:?}");
             println!("   Total overhead: {:?}", fragment_time + reconstruct_time);
             println!("   Data integrity: {}", blockchain_data == reconstructed);
 
             let estimated_latency = FragmentEngine::estimate_mobile_latency(blockchain_data.len());
-            println!("   Estimated mobile latency: {}ms", estimated_latency);
+            println!("   Estimated mobile latency: {estimated_latency}ms");
         } else {
             println!(
                 "   Data size: {} bytes - too small for fragmentation",
@@ -168,14 +167,14 @@ fn main() -> Result<()> {
         let parallel_time = start.elapsed();
 
         println!("   Dataset size: {} bytes", large_dataset.len());
-        println!("   Sequential processing: {:?}", sequential_time);
-        println!("   Parallel processing: {:?}", parallel_time);
+        println!("   Sequential processing: {sequential_time:?}");
+        println!("   Parallel processing: {parallel_time:?}");
 
         if parallel_time < sequential_time {
             let improvement =
                 ((sequential_time.as_nanos() as f64 / parallel_time.as_nanos() as f64) - 1.0)
                     * 100.0;
-            println!("   Performance improvement: {:.1}%", improvement);
+            println!("   Performance improvement: {improvement:.1}%");
         } else {
             println!("   Overhead due to fragmentation for small dataset");
         }

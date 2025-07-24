@@ -125,7 +125,7 @@ fn main() {
     }
 
     let duration = start.elapsed();
-    println!("   10 complete KEM operations took: {:?}", duration);
+    println!("   10 complete KEM operations took: {duration:?}");
     println!("   Average per operation: {:?}", duration / 10);
     println!();
 

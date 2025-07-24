@@ -11,7 +11,7 @@ fn main() -> Result<()> {
     println!("1. Basic Hash Operations:");
     let input1 = b"Hello, TOPAY Foundation!";
     let hash1 = Hash::new(input1);
-    println!("   Input: {:?}", std::str::from_utf8(input1).unwrap());
+    println!("   Input: {}", std::str::from_utf8(input1).unwrap());
     println!("   Hash:  {}", hash1.to_hex());
     println!();
 
@@ -40,8 +40,8 @@ fn main() -> Result<()> {
     let data1 = b"first part";
     let data2 = b"second part";
     let combined_hash = Hash::combine(data1, data2);
-    println!("   Data 1: {:?}", std::str::from_utf8(data1).unwrap());
-    println!("   Data 2: {:?}", std::str::from_utf8(data2).unwrap());
+    println!("   Data 1: {}", std::str::from_utf8(data1).unwrap());
+    println!("   Data 2: {}", std::str::from_utf8(data2).unwrap());
     println!("   Combined Hash: {}", combined_hash.to_hex());
     println!();
 
@@ -66,7 +66,7 @@ fn main() -> Result<()> {
     let restored_hash = Hash::from_hex(&hex_string)?;
 
     println!("   Original:  {}", original_hash.to_hex());
-    println!("   Hex:       {}", hex_string);
+    println!("   Hex:       {hex_string}");
     println!("   Restored:  {}", restored_hash.to_hex());
     println!("   Match:     {}", original_hash == restored_hash);
     println!();
@@ -75,7 +75,7 @@ fn main() -> Result<()> {
     println!("6. Binary Data Hashing:");
     let binary_data = vec![0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE, 0xFD, 0xFC];
     let binary_hash = Hash::hash_binary(&binary_data);
-    println!("   Binary Data: {:02x?}", binary_data);
+    println!("   Binary Data: {binary_data:02x?}");
     println!("   Hash:        {}", binary_hash.to_hex());
     println!();
 
@@ -83,7 +83,7 @@ fn main() -> Result<()> {
     println!("7. String Hashing:");
     let message = "TOPAY Foundation: Building the future of quantum-safe finance";
     let string_hash = Hash::hash_string(message);
-    println!("   Message: {}", message);
+    println!("   Message: {message}");
     println!("   Hash:    {}", string_hash.to_hex());
     println!();
 
