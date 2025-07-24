@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 	"time"
-	"github.com/topayfoundation/topayz512"
+	"github.com/TOPAY-FOUNDATION/TOPAY_Z512/go"
 )
 func main() {
 	fmt.Println("=== TOPAY-Z512 Go Implementation - Interactive Guide ===")

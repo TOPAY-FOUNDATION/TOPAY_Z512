@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/topayfoundation/topayz512"
+	"github.com/TOPAY-FOUNDATION/TOPAY_Z512/go"
 )
 
 func main() {
