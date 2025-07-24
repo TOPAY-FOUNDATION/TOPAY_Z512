@@ -13,6 +13,7 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
+    "docs": "echo 'Documentation generation placeholder - TypeDoc not configured yet'",
     "benchmark": "node dist/benchmarks/index.js",
     "example:quick-start": "node dist/examples/quick-start.js",
     "example:keypair": "node dist/examples/keypair.js",
