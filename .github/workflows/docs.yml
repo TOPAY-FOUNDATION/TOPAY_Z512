@@ -19,14 +19,26 @@ on:
       - '*.md'
   workflow_dispatch:
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 env:
   NODE_VERSION: '18'
   GO_VERSION: '1.21'
   RUST_VERSION: 'stable'
 
 jobs:
-  build-js-docs:
-    name: Build JavaScript Documentation
+  build-docs:
+    name: Build All Documentation
     runs-on: ubuntu-latest
     
     steps:
@@ -37,113 +49,76 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
     
-    - name: Install dependencies
-      working-directory: ./js
-      run: npm ci
-    
-    - name: Build TypeScript
-      working-directory: ./js
-      run: npm run build
-    
-    - name: Generate TypeDoc documentation
-      working-directory: ./js
-      run: npm run docs
-    
-    - name: Upload JavaScript docs
-      uses: actions/upload-artifact@v3
-      with:
-        name: js-docs
-        path: js/docs/
-
-  build-go-docs:
-    name: Build Go Documentation
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
     - name: Setup Go
       uses: actions/setup-go@v4
       with:
         go-version: ${{ env.GO_VERSION }}
-    
-    - name: Install godoc
-      run: go install golang.org/x/tools/cmd/godoc@latest
-    
-    - name: Generate Go documentation
-      working-directory: ./go
-      run: |
-        mkdir -p docs
-        godoc -html . > docs/index.html
-    
-    - name: Upload Go docs
-      uses: actions/upload-artifact@v3
-      with:
-        name: go-docs
-        path: go/docs/
-
-  build-rust-docs:
-    name: Build Rust Documentation
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
     
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
       with:
         toolchain: ${{ env.RUST_VERSION }}
     
+    - name: Install pandoc for markdown conversion
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pandoc
+    
+    - name: Install godoc
+      run: go install golang.org/x/tools/cmd/godoc@latest
+    
+    - name: Install JavaScript dependencies
+      working-directory: ./js
+      run: npm ci
+    
+    - name: Generate JavaScript documentation
+      working-directory: ./js
+      run: npm run docs
+    
+    - name: Generate Go documentation
+      working-directory: ./go
+      run: |
+        mkdir -p docs
+        godoc -url="/pkg/github.com/TOPAY-FOUNDATION/TOPAY_Z512/go/" > docs/index.html
+    
     - name: Generate Rust documentation
       working-directory: ./rust
       run: cargo doc --no-deps --document-private-items
     
-    - name: Upload Rust docs
-      uses: actions/upload-artifact@v3
-      with:
-        name: rust-docs
-        path: rust/target/doc/
-
-  deploy-docs:
-    name: Deploy Documentation to GitHub Pages
-    runs-on: ubuntu-latest
-    needs: [build-js-docs, build-go-docs, build-rust-docs]
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-      actions: read
-    
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Download JavaScript docs
-      uses: actions/download-artifact@v3
-      with:
-        name: js-docs
-        path: ./docs-site/js/
-    
-    - name: Download Go docs
-      uses: actions/download-artifact@v3
-      with:
-        name: go-docs
-        path: ./docs-site/go/
-    
-    - name: Download Rust docs
-      uses: actions/download-artifact@v3
-      with:
-        name: rust-docs
-        path: ./docs-site/rust/
-    
-    - name: Create documentation index
+    - name: Create unified documentation site
       run: |
-        mkdir -p docs-site
-        cat > docs-site/index.html << 'EOF'
+        mkdir -p _site
+        
+        # Copy main documentation files
+        cp -r docs/* _site/ 2>/dev/null || true
+        
+        # Copy JavaScript docs
+        mkdir -p _site/js
+        cp -r js/docs/* _site/js/ 2>/dev/null || true
+        
+        # Copy Go docs
+        mkdir -p _site/go
+        cp -r go/docs/* _site/go/ 2>/dev/null || true
+        
+        # Copy Rust docs
+        mkdir -p _site/rust
+        cp -r rust/target/doc/* _site/rust/ 2>/dev/null || true
+        
+        # Copy markdown documentation files
+        cp docs/*.md _site/ 2>/dev/null || true
+        
+        # Convert markdown files to HTML for better web viewing
+        if command -v pandoc &> /dev/null; then
+          for md_file in _site/*.md; do
+            if [ -f "$md_file" ]; then
+              html_file="${md_file%.md}.html"
+              pandoc "$md_file" -o "$html_file" --standalone --css=https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown-light.css
+            fi
+          done
+        fi
+        
+        # Create main index.html
+        cat > _site/index.html << 'EOF'
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -220,7 +195,7 @@ jobs:
                     <p><strong>Installation:</strong> <code>go get github.com/TOPAY-FOUNDATION/TOPAY_Z512/go</code></p>
                 </a>
                 
-                <a href="rust/" class="doc-card">
+                <a href="rust/topayz512/" class="doc-card">
                     <h3>🦀 Rust</h3>
                     <p>Rust crate documentation with comprehensive API coverage.</p>
                     <p><strong>Installation:</strong> <code>cargo add topay-z512</code></p>
@@ -240,21 +215,38 @@ jobs:
                     <li>Comprehensive test coverage</li>
                 </ul>
             </div>
+            
+            <div style="margin-top: 2rem; text-align: center;">
+                <p><a href="README.html">📖 Documentation Guide</a> | <a href="api_reference.html">🔧 API Reference</a> | <a href="design_spec.html">🏗️ Design Specification</a></p>
+            </div>
         </body>
         </html>
         EOF
+        
+        # Create .nojekyll file to disable Jekyll processing
+        touch _site/.nojekyll
     
     - name: Setup Pages
-      uses: actions/configure-pages@v3
+      uses: actions/configure-pages@v4
     
-    - name: Upload to GitHub Pages
-      uses: actions/upload-pages-artifact@v2
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        path: ./docs-site
+        path: '_site'
+
+  deploy:
+    name: Deploy to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build-docs
+    if: github.ref == 'refs/heads/main'
     
+    steps:
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v2
+      uses: actions/deploy-pages@v4
 
   check-docs:
     name: Check Documentation Quality
@@ -272,7 +264,7 @@ jobs:
       run: npm install -g markdownlint-cli
     
     - name: Lint Markdown files
-      run: markdownlint '**/*.md' --ignore node_modules --ignore target
+      run: markdownlint '**/*.md' --ignore node_modules --ignore target --ignore _site
     
     - name: Check for broken links
       uses: gaurav-nelson/github-action-markdown-link-check@v1
