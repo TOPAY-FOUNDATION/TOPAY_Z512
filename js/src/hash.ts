@@ -1,23 +1,67 @@
 /**
- * Hash functions for TOPAY-Z512
+ * Optimized hash functions for TOPAY-Z512
  */
 
 import { createHash, createHmac } from 'crypto';
 import { HASH_SIZE } from './index';
 import { Hash, EmptyDataError } from './index';
-import { validateSize, concatBytes } from './utils';
+import { validateSize, concatBytes, constantTimeEqual } from './utils';
+
+// Additional constants not exported from index
+const SALT_SIZE = 32;
+const HMAC_KEY_SIZE = 64;
+
+// Hash cache for memoization of repeated operations
+const hashCache = new Map<string, Uint8Array>();
+const CACHE_MAX_SIZE = 1000;
 
 /**
- * Computes a cryptographic hash of the input data
+ * Clears the hash cache to prevent memory leaks
+ */
+export function clearHashCache(): void {
+  hashCache.clear();
+}
+
+/**
+ * Optimized hash computation with memoization
  * @param data - Data to hash
- * @returns Promise resolving to the hash
+ * @param useCache - Whether to use caching (default: true for data < 1KB)
+ * @returns Promise resolving to hash
  * @throws EmptyDataError if data is empty
  */
-export async function computeHash(data: Uint8Array): Promise<Hash> {
+export async function computeHash(data: Uint8Array, useCache: boolean = data.length < 1024): Promise<Hash> {
   if (data.length === 0) {
     throw new EmptyDataError();
   }
 
+  // Use cache for small, repeated computations
+  if (useCache) {
+    const key = Array.from(data).join(',');
+    if (hashCache.has(key)) {
+      // Create a proper copy to prevent corruption
+      const cached = hashCache.get(key)!;
+      return new Uint8Array(cached);
+    }
+    
+    // Use SHA-512 as the base hash function for quantum resistance
+    const hash = createHash('sha512');
+    hash.update(data);
+    const result = new Uint8Array(hash.digest());
+    
+    // Manage cache size
+    if (hashCache.size >= CACHE_MAX_SIZE) {
+      const firstKey = hashCache.keys().next().value;
+      if (firstKey !== undefined) {
+        hashCache.delete(firstKey);
+      }
+    }
+    
+    // Store a copy in cache to prevent corruption
+    hashCache.set(key, new Uint8Array(result));
+    validateSize(result, HASH_SIZE, 'hash');
+    return result;
+  }
+  
   // Use SHA-512 as the base hash function for quantum resistance
   const hash = createHash('sha512');
   hash.update(data);
@@ -64,13 +108,25 @@ export async function computeHmac(key: Uint8Array, data: Uint8Array): Promise<Ha
 }
 
 /**
- * Performs batch hashing of multiple data items
+ * Optimized batch hashing with controlled concurrency
  * @param dataItems - Array of data to hash
+ * @param concurrency - Maximum concurrent operations (default: 8)
  * @returns Promise resolving to array of hashes
  */
-export async function batchHash(dataItems: Uint8Array[]): Promise<Hash[]> {
-  const promises = dataItems.map(data => computeHash(data));
-  return Promise.all(promises);
+export async function batchHash(dataItems: Uint8Array[], concurrency: number = 8): Promise<Hash[]> {
+  if (dataItems.length === 0) return [];
+  
+  // Process in chunks to avoid overwhelming the system
+  const results: Hash[] = [];
+  
+  for (let i = 0; i < dataItems.length; i += concurrency) {
+    const chunk = dataItems.slice(i, i + concurrency);
+    const chunkPromises = chunk.map(data => computeHash(data, data.length < 1024));
+    const chunkResults = await Promise.all(chunkPromises);
+    results.push(...chunkResults);
+  }
+  
+  return results;
 }
 
 /**
@@ -187,162 +243,3 @@ export async function verifyHashChain(chain: Hash[], initialData: Uint8Array): P
 
   return true;
 }
-
-// Import constantTimeEqual from utils
-import { constantTimeEqual } from './utils';
-
-/**
- * Batch hash operations for improved performance
- * @param inputs - Array of data to hash
- * @param batchSize - Number of operations to process in parallel
- * @returns Promise resolving to array of hashes
- */
-export async function batchHash(inputs: Uint8Array[], batchSize: number = 8): Promise<Hash[]> {
-  if (inputs.length === 0) return [];
-  
-  const results: Hash[] = new Array(inputs.length);
-  
-  // Process in batches to avoid overwhelming the system
-  for (let i = 0; i < inputs.length; i += batchSize) {
-    const batch = inputs.slice(i, i + batchSize);
-    const batchPromises = batch.map(data => computeHash(data));
-    const batchResults = await Promise.all(batchPromises);
-    
-    // Copy results to the correct positions
-    for (let j = 0; j < batchResults.length; j++) {
-      results[i + j] = batchResults[j];
-    }
-  }
-  
-  return results;
-}
-
-/**
- * Optimized hash computation using Web Workers for large data
- * @param data - Data to hash
- * @param useWorker - Whether to use Web Worker for computation
- * @returns Promise resolving to hash
- */
-export async function computeHashOptimized(data: Uint8Array, useWorker: boolean = false): Promise<Hash> {
-  // For small data, use direct computation
-  if (data.length < 64 * 1024 || !useWorker) {
-    return computeHash(data);
-  }
-  
-  // For large data, consider using Web Worker (if available)
-  if (typeof Worker !== 'undefined') {
-    return computeHashWithWorker(data);
-  }
-  
-  return computeHash(data);
-}
-
-/**
- * Compute hash using Web Worker for better performance on large data
- * @param data - Data to hash
- * @returns Promise resolving to hash
- */
-async function computeHashWithWorker(data: Uint8Array): Promise<Hash> {
-  return new Promise((resolve, reject) => {
-    // Create inline worker for hash computation
-    const workerCode = `
-      self.onmessage = async function(e) {
-        const { data } = e.data;
-        try {
-          // Import crypto for worker context
-          const crypto = self.crypto || self.webkitCrypto;
-          if (!crypto) {
-            throw new Error('Crypto not available in worker');
-          }
-          
-          // Compute hash using SubtleCrypto
-          const hashBuffer = await crypto.subtle.digest('SHA-512', data);
-          const hashArray = new Uint8Array(hashBuffer);
-          
-          self.postMessage({ success: true, hash: hashArray });
-        } catch (error) {
-          self.postMessage({ success: false, error: error.message });
-        }
-      };
-    `;
-    
-    const blob = new Blob([workerCode], { type: 'application/javascript' });
-    const worker = new Worker(URL.createObjectURL(blob));
-    
-    worker.onmessage = (e) => {
-      const { success, hash, error } = e.data;
-      worker.terminate();
-      URL.revokeObjectURL(blob.toString());
-      
-      if (success) {
-        resolve(hash as Hash);
-      } else {
-        reject(new Error(error));
-      }
-    };
-    
-    worker.onerror = (error) => {
-      worker.terminate();
-      URL.revokeObjectURL(blob.toString());
-      reject(error);
-    };
-    
-    // Send data to worker
-    worker.postMessage({ data });
-  });
-}
-
-/**
- * Memory-efficient streaming hash for large data
- */
-export class StreamingHash {
-  private hasher: any;
-  private chunks: Uint8Array[] = [];
-  private totalSize = 0;
-  
-  constructor() {
-    // Initialize streaming hasher
-    this.reset();
-  }
-  
-  /**
-   * Reset the streaming hash state
-   */
-  reset(): void {
-    this.chunks = [];
-    this.totalSize = 0;
-  }
-  
-  /**
-   * Update the hash with new data
-   * @param data - Data chunk to add
-   */
-  update(data: Uint8Array): void {
-    this.chunks.push(new Uint8Array(data)); // Copy to avoid external modifications
-    this.totalSize += data.length;
-  }
-  
-  /**
-   * Finalize and get the hash result
-   * @returns Promise resolving to final hash
-   */
-  async finalize(): Promise<Hash> {
-    // Concatenate all chunks efficiently
-    const combined = new Uint8Array(this.totalSize);
-    let offset = 0;
-    
-    for (const chunk of this.chunks) {
-      combined.set(chunk, offset);
-      offset += chunk.length;
-    }
-    
-    // Clear chunks to free memory
-    this.chunks = [];
-    this.totalSize = 0;
-    
-    return computeHash(combined);
-  }
-}
-
-// Import constantTimeEqual from utils
-import { constantTimeEqual } from './utils';

@@ -1075,4 +1075,15 @@ if (require.main === module) {
   runAllTests().catch(console.error);
 }
 
-export { runAllTests };
+export { 
+  runAllTests,
+  testConstants,
+  testUtilities,
+  testHashOperations,
+  testKeyPairOperations,
+  testKEMOperations,
+  testFragmentation,
+  testPerformance,
+  testIntegration,
+  TestRunner
+};

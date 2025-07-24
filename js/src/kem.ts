@@ -19,16 +19,69 @@ import {
 import { secureRandom, validateSize, constantTimeEqual, secureZero, copyBytes, xorBytes } from './utils';
 import { computeHash, computeHmac } from './hash';
 
+// Key pair cache for improved performance
+const keyPairCache = new Map<string, { publicKey: Uint8Array; secretKey: Uint8Array; timestamp: number }>();
+const KEY_CACHE_TTL = 300000; // 5 minutes
+const KEY_CACHE_MAX_SIZE = 100;
+
 /**
- * Generates a new KEM key pair
+ * Clears expired entries from the key pair cache
+ */
+function cleanupKeyCache(): void {
+  const now = Date.now();
+  for (const [key, value] of Array.from(keyPairCache.entries())) {
+    if (now - value.timestamp > KEY_CACHE_TTL) {
+      keyPairCache.delete(key);
+    }
+  }
+}
+
+/**
+ * Optimized KEM key generation with optional caching
+ * @param useCache - Whether to use caching (default: false for security)
  * @returns Promise resolving to a new KEM key pair
  */
-export async function kemKeyGen(): Promise<KEMKeyPair> {
+export async function kemKeyGen(useCache: boolean = false): Promise<KEMKeyPair> {
+  if (useCache) {
+    // Clean up expired entries periodically
+    if (keyPairCache.size > 0 && Math.random() < 0.1) {
+      cleanupKeyCache();
+    }
+    
+    // For demonstration purposes, we'll cache based on a simple key
+    // In production, this should be more sophisticated
+    const cacheKey = 'default';
+    const cached = keyPairCache.get(cacheKey);
+    
+    if (cached && Date.now() - cached.timestamp < KEY_CACHE_TTL) {
+      return {
+        publicKey: new Uint8Array(cached.publicKey),
+        secretKey: new Uint8Array(cached.secretKey)
+      };
+    }
+  }
+
   // Generate secret key from secure random bytes
   const secretKey = await secureRandom(KEM_SECRET_KEY_SIZE);
   
   // Derive public key from secret key
   const publicKey = await deriveKEMPublicKey(secretKey);
+  
+  if (useCache) {
+    // Manage cache size
+    if (keyPairCache.size >= KEY_CACHE_MAX_SIZE) {
+      const firstKey = keyPairCache.keys().next().value;
+      if (firstKey !== undefined) {
+        keyPairCache.delete(firstKey);
+      }
+    }
+    
+    keyPairCache.set('default', {
+      publicKey: new Uint8Array(publicKey),
+      secretKey: new Uint8Array(secretKey),
+      timestamp: Date.now()
+    });
+  }
   
   return {
     publicKey,

@@ -30,11 +30,12 @@
     "types": ["node", "jest"]
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
+    "src/test/**/*",
     "**/*.test.ts"
   ]
 }

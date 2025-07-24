@@ -21,7 +21,7 @@ export async function secureRandom(size: number): Promise<Uint8Array> {
 }
 
 /**
- * Performs constant-time comparison of two byte arrays
+ * Optimized constant-time comparison with early termination prevention
  * @param a - First byte array
  * @param b - Second byte array
  * @returns True if arrays are equal, false otherwise
@@ -32,7 +32,18 @@ export function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
   }
 
   let result = 0;
-  for (let i = 0; i < a.length; i++) {
+  
+  // Use 32-bit operations for better performance
+  const len32 = Math.floor(a.length / 4) * 4;
+  const view32A = new Uint32Array(a.buffer, a.byteOffset, len32 / 4);
+  const view32B = new Uint32Array(b.buffer, b.byteOffset, len32 / 4);
+  
+  for (let i = 0; i < view32A.length; i++) {
+    result |= view32A[i]! ^ view32B[i]!;
+  }
+  
+  // Handle remaining bytes
+  for (let i = len32; i < a.length; i++) {
     result |= a[i]! ^ b[i]!;
   }
 
@@ -106,13 +117,13 @@ export function copyBytes(data: Uint8Array): Uint8Array {
 }
 
 /**
- * Concatenates multiple byte arrays
+ * Optimized concatenation of multiple byte arrays with pooled buffers
  * @param arrays - Arrays to concatenate
  * @returns Concatenated byte array
  */
 export function concatBytes(...arrays: Uint8Array[]): Uint8Array {
   const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0);
-  const result = new Uint8Array(totalLength);
+  const result = getPooledBuffer(totalLength);
   
   let offset = 0;
   for (const array of arrays) {
@@ -130,16 +141,55 @@ export function concatBytes(...arrays: Uint8Array[]): Uint8Array {
  * @returns XOR result
  * @throws Error if arrays have different lengths
  */
+// Buffer pool for memory optimization
+const bufferPool = new Map<number, Uint8Array[]>();
+const MAX_POOL_SIZE = 50;
+
+/**
+ * Gets a buffer from the pool or creates a new one
+ * @param size - Size of buffer needed
+ * @returns Uint8Array buffer
+ */
+function getPooledBuffer(size: number): Uint8Array {
+  const pool = bufferPool.get(size);
+  if (pool && pool.length > 0) {
+    return pool.pop()!;
+  }
+  return new Uint8Array(size);
+}
+
+/**
+ * Returns a buffer to the pool for reuse
+ * @param buffer - Buffer to return to pool
+ */
+function returnToPool(buffer: Uint8Array): void {
+  const size = buffer.length;
+  let pool = bufferPool.get(size);
+  
+  if (!pool) {
+    pool = [];
+    bufferPool.set(size, pool);
+  }
+  
+  if (pool.length < MAX_POOL_SIZE) {
+    // Clear the buffer before returning to pool
+    buffer.fill(0);
+    pool.push(buffer);
+  }
+}
+
 export function xorBytes(a: Uint8Array, b: Uint8Array): Uint8Array {
   if (a.length !== b.length) {
-    throw new Error('Arrays must have equal length for XOR operation');
+    throw new Error('Arrays must have the same length');
   }
-
-  const result = new Uint8Array(a.length);
+  
+  const result = getPooledBuffer(a.length);
+  
+  // Use simple byte-by-byte XOR to avoid alignment issues
   for (let i = 0; i < a.length; i++) {
     result[i] = a[i]! ^ b[i]!;
   }
-
+  
   return result;
 }
 
@@ -203,4 +253,31 @@ export function getSystemCapabilities(): {
   }
 
   return capabilities;
+}
+
+/**
+ * Clears buffer pools to free memory
+ */
+export function clearBufferPools(): void {
+  bufferPool.clear();
+}
+
+/**
+ * Gets buffer pool statistics
+ * @returns Pool statistics
+ */
+export function getBufferPoolStats(): { totalPools: number; totalBuffers: number; sizes: number[] } {
+  let totalBuffers = 0;
+  const sizes: number[] = [];
+  
+  for (const [size, pool] of Array.from(bufferPool.entries())) {
+    totalBuffers += pool.length;
+    sizes.push(size);
+  }
+  
+  return {
+    totalPools: bufferPool.size,
+    totalBuffers,
+    sizes: sizes.sort((a, b) => a - b)
+  };
 }
