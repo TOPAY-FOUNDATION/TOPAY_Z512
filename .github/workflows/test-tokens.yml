@@ -1,0 +1,57 @@
+name: Test Tokens Configuration
+
+on:
+  workflow_dispatch: # Manual trigger only
+
+jobs:
+  test-tokens:
+    name: Test Token Configuration
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Test GITHUB_TOKEN
+      run: |
+        if [ -n "$GITHUB_TOKEN" ]; then
+          echo "✅ GITHUB_TOKEN is available"
+        else
+          echo "❌ GITHUB_TOKEN is missing"
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Test NPM_TOKEN
+      run: |
+        if [ -n "$NPM_TOKEN" ]; then
+          echo "✅ NPM_TOKEN is available"
+        else
+          echo "❌ NPM_TOKEN is missing - needed for npm publishing"
+        fi
+      env:
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    
+    - name: Test CARGO_REGISTRY_TOKEN
+      run: |
+        if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
+          echo "✅ CARGO_REGISTRY_TOKEN is available"
+        else
+          echo "❌ CARGO_REGISTRY_TOKEN is missing - needed for crates.io publishing"
+        fi
+      env:
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+    
+    - name: Test SONAR_TOKEN
+      run: |
+        if [ -n "$SONAR_TOKEN" ]; then
+          echo "✅ SONAR_TOKEN is available"
+        else
+          echo "❌ SONAR_TOKEN is missing - needed for SonarCloud analysis"
+        fi
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    
+    - name: Summary
+      run: |
+        echo "🔍 Token Configuration Summary:"
+        echo "================================"
+        echo "Run this workflow manually to check if all tokens are properly configured."
+        echo "If any tokens are missing, follow the setup guide in the repository."

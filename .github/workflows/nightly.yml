@@ -1,0 +1,331 @@
+name: Nightly Builds
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  GO_VERSION: '1.21'
+  RUST_VERSION: 'nightly'
+
+jobs:
+  nightly-js:
+    name: Nightly JavaScript Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install dependencies
+      working-directory: ./js
+      run: npm ci
+    
+    - name: Build package
+      working-directory: ./js
+      run: npm run build
+    
+    - name: Run tests
+      working-directory: ./js
+      run: npm test
+    
+    - name: Create nightly package
+      working-directory: ./js
+      run: |
+        # Update version for nightly
+        npm version prerelease --preid=nightly-$(date +%Y%m%d) --no-git-tag-version
+        npm pack
+    
+    - name: Upload nightly package
+      uses: actions/upload-artifact@v3
+      with:
+        name: nightly-js-package
+        path: js/*.tgz
+        retention-days: 7
+
+  nightly-go:
+    name: Nightly Go Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Run tests
+      working-directory: ./go
+      run: go test -v ./...
+    
+    - name: Build examples
+      working-directory: ./go
+      run: |
+        mkdir -p nightly-builds
+        for example in examples/*/; do
+          if [ -f "$example/main.go" ]; then
+            example_name=$(basename "$example")
+            echo "Building $example_name"
+            cd "$example"
+            go build -o "../nightly-builds/topay-z512-$example_name" .
+            cd - > /dev/null
+          fi
+        done
+    
+    - name: Upload nightly builds
+      uses: actions/upload-artifact@v3
+      with:
+        name: nightly-go-builds
+        path: go/nightly-builds/
+        retention-days: 7
+
+  nightly-rust:
+    name: Nightly Rust Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Rust Nightly
+      uses: dtolnay/rust-toolchain@nightly
+    
+    - name: Run tests
+      working-directory: ./rust
+      run: cargo test --all-features
+    
+    - name: Build with nightly features
+      working-directory: ./rust
+      run: |
+        cargo build --all-features
+        cargo build --release --all-features
+    
+    - name: Upload nightly build
+      uses: actions/upload-artifact@v3
+      with:
+        name: nightly-rust-build
+        path: rust/target/release/
+        retention-days: 7
+
+  nightly-cross-platform:
+    name: Nightly Cross-Platform Builds
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Build for current platform
+      working-directory: ./go
+      run: |
+        mkdir -p nightly-builds
+        go build -o nightly-builds/topay-z512-quick-start-${{ matrix.os }} ./examples/quick_start/
+    
+    - name: Upload platform-specific build
+      uses: actions/upload-artifact@v3
+      with:
+        name: nightly-${{ matrix.os }}-build
+        path: go/nightly-builds/
+        retention-days: 7
+
+  nightly-performance:
+    name: Nightly Performance Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Run performance benchmarks
+      working-directory: ./go
+      run: |
+        echo "=== Nightly Performance Benchmarks ===" > nightly-performance.txt
+        echo "Date: $(date)" >> nightly-performance.txt
+        echo "Commit: ${{ github.sha }}" >> nightly-performance.txt
+        echo "" >> nightly-performance.txt
+        go test -bench=. -benchmem ./... >> nightly-performance.txt 2>&1
+    
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: nightly-performance-results
+        path: go/nightly-performance.txt
+        retention-days: 30
+
+  nightly-security:
+    name: Nightly Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Run security scans
+      run: |
+        echo "=== Nightly Security Scan ===" > security-report.txt
+        echo "Date: $(date)" >> security-report.txt
+        echo "Commit: ${{ github.sha }}" >> security-report.txt
+        echo "" >> security-report.txt
+        
+        # JavaScript security scan
+        echo "=== JavaScript Security ===" >> security-report.txt
+        cd js
+        npm ci
+        npm audit --audit-level=low >> ../security-report.txt 2>&1 || true
+        cd ..
+        
+        # Go security scan
+        echo "=== Go Security ===" >> security-report.txt
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        cd go
+        govulncheck ./... >> ../security-report.txt 2>&1 || true
+        cd ..
+        
+        # Rust security scan
+        echo "=== Rust Security ===" >> security-report.txt
+        cargo install cargo-audit
+        cd rust
+        cargo audit >> ../security-report.txt 2>&1 || true
+    
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      with:
+        name: nightly-security-report
+        path: security-report.txt
+        retention-days: 30
+
+  nightly-docs:
+    name: Nightly Documentation Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Build all documentation
+      run: |
+        mkdir -p nightly-docs
+        
+        # JavaScript docs
+        cd js
+        npm ci
+        npm run build
+        npx typedoc src/index.ts --out ../nightly-docs/js --theme default
+        cd ..
+        
+        # Go docs
+        go install golang.org/x/tools/cmd/godoc@latest
+        cd go
+        mkdir -p ../nightly-docs/go
+        godoc -html . > ../nightly-docs/go/index.html
+        cd ..
+        
+        # Rust docs
+        cd rust
+        cargo doc --no-deps --document-private-items
+        cp -r target/doc ../nightly-docs/rust
+        cd ..
+    
+    - name: Upload nightly docs
+      uses: actions/upload-artifact@v3
+      with:
+        name: nightly-documentation
+        path: nightly-docs/
+        retention-days: 7
+
+  cleanup-old-artifacts:
+    name: Cleanup Old Nightly Artifacts
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - name: Delete old artifacts
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const owner = context.repo.owner;
+          const repo = context.repo.repo;
+          
+          // Get all artifacts
+          const artifacts = await github.rest.actions.listArtifactsForRepo({
+            owner,
+            repo,
+            per_page: 100
+          });
+          
+          // Filter nightly artifacts older than 7 days
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          
+          for (const artifact of artifacts.data.artifacts) {
+            if (artifact.name.includes('nightly') && new Date(artifact.created_at) < sevenDaysAgo) {
+              console.log(`Deleting old artifact: ${artifact.name} (${artifact.created_at})`);
+              await github.rest.actions.deleteArtifact({
+                owner,
+                repo,
+                artifact_id: artifact.id
+              });
+            }
+          }
+
+  notify-results:
+    name: Notify Nightly Results
+    runs-on: ubuntu-latest
+    needs: [nightly-js, nightly-go, nightly-rust, nightly-performance, nightly-security]
+    if: always()
+    
+    steps:
+    - name: Create summary
+      run: |
+        echo "# 🌙 Nightly Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Build Results" >> $GITHUB_STEP_SUMMARY
+        echo "- JavaScript: ${{ needs.nightly-js.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Go: ${{ needs.nightly-go.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Rust: ${{ needs.nightly-rust.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Performance: ${{ needs.nightly-performance.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Security: ${{ needs.nightly-security.result }}" >> $GITHUB_STEP_SUMMARY

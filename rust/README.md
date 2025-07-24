@@ -295,7 +295,7 @@ TOPAY-Z512 maintains compatibility across language implementations:
 
 ```bash
 # Clone the repository
-git clone https://github.com/topay-foundation/topay-z512.git
+git clone https://github.com/TOPAY-FOUNDATION/TOPAY_Z512.git
 cd topay-z512/rust
 
 # Run tests
@@ -343,7 +343,7 @@ TOPAY-Z512 is part of the TOPAY Foundation's mission to create a quantum-safe, h
 
 For questions, issues, or contributions:
 
-- GitHub Issues: [Report bugs or request features](https://github.com/topay-foundation/topay-z512/issues)
+- GitHub Issues: [Report bugs or request features](https://github.com/TOPAY-FOUNDATION/TOPAY_Z512/issues)
 - Documentation: [Full API documentation](https://docs.rs/topayz512)
 - Community: [TOPAY Foundation Discord](https://discord.gg/topay)
 

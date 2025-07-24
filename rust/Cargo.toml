@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["TOPAY Foundation <contact@topayfoundation.com>"]
 description = "TOPAY-Z512: Quantum-safe 512-bit post-quantum cryptographic library"
 license = "Apache-2.0"
-repository = "https://github.com/topay-foundation/topayz512"
+repository = "https://github.com/TOPAY-FOUNDATION/TOPAY_Z512"
 keywords = ["cryptography", "post-quantum", "kem", "lattice", "blockchain"]
 categories = ["cryptography", "no-std"]
 

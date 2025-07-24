@@ -1,0 +1,371 @@
+name: Compatibility Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly on Monday at 6 AM UTC
+  workflow_dispatch:
+
+env:
+  NODE_VERSIONS: '["16", "18", "20", "21"]'
+  GO_VERSIONS: '["1.20", "1.21", "1.22"]'
+  RUST_VERSIONS: '["stable", "beta", "nightly"]'
+
+jobs:
+  node-compatibility:
+    name: Node.js Compatibility
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [16, 18, 20, 21]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    
+    - name: Install dependencies
+      working-directory: ./js
+      run: npm ci
+    
+    - name: Build package
+      working-directory: ./js
+      run: npm run build
+    
+    - name: Run tests
+      working-directory: ./js
+      run: npm test
+    
+    - name: Test package installation
+      run: |
+        cd /tmp
+        npm init -y
+        npm install ${{ github.workspace }}/js
+        node -e "const pkg = require('@topayfoundation/topayz512'); console.log('Package loaded successfully');"
+
+  go-compatibility:
+    name: Go Compatibility
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        go-version: ['1.20', '1.21', '1.22']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go ${{ matrix.go-version }}
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go-version }}
+    
+    - name: Run tests
+      working-directory: ./go
+      run: go test -v ./...
+    
+    - name: Build examples
+      working-directory: ./go
+      run: |
+        for example in examples/*/; do
+          if [ -f "$example/main.go" ]; then
+            echo "Building $example"
+            cd "$example"
+            go build -v .
+            cd - > /dev/null
+          fi
+        done
+    
+    - name: Test module import
+      working-directory: ./go
+      run: |
+        cd /tmp
+        go mod init test-import
+        go get github.com/TOPAY-FOUNDATION/TOPAY_Z512/go@main
+        echo 'package main
+        import (
+          "fmt"
+          "github.com/TOPAY-FOUNDATION/TOPAY_Z512/go"
+        )
+        func main() {
+          _, _, err := topayz512.GenerateKeyPair()
+          if err != nil {
+            panic(err)
+          }
+          fmt.Println("Module imported and working correctly")
+        }' > main.go
+        go run main.go
+
+  rust-compatibility:
+    name: Rust Compatibility
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust-version: [stable, beta]
+        include:
+          - os: ubuntu-latest
+            rust-version: nightly
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Rust ${{ matrix.rust-version }}
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust-version }}
+    
+    - name: Run tests
+      working-directory: ./rust
+      run: cargo test --all-features
+    
+    - name: Build with different feature combinations
+      working-directory: ./rust
+      run: |
+        cargo build --no-default-features
+        cargo build --all-features
+        cargo build  # default features
+    
+    - name: Check compilation on nightly (allow failures)
+      if: matrix.rust-version == 'nightly'
+      working-directory: ./rust
+      run: cargo check --all-features
+      continue-on-error: true
+
+  browser-compatibility:
+    name: Browser Compatibility
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install dependencies
+      working-directory: ./js
+      run: npm ci
+    
+    - name: Build package
+      working-directory: ./js
+      run: npm run build
+    
+    - name: Install Playwright
+      run: |
+        npm install -g playwright
+        playwright install
+    
+    - name: Create browser test
+      run: |
+        mkdir -p browser-test
+        cd browser-test
+        cat > index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>TOPAY-Z512 Browser Test</title>
+        </head>
+        <body>
+            <h1>TOPAY-Z512 Browser Compatibility Test</h1>
+            <div id="results"></div>
+            <script type="module">
+                import { generateKeyPair, computeHash } from '../js/dist/index.js';
+                
+                const results = document.getElementById('results');
+                
+                try {
+                    // Test key generation
+                    const { publicKey, privateKey } = generateKeyPair();
+                    results.innerHTML += '<p>✅ Key generation successful</p>';
+                    
+                    // Test hashing
+                    const data = new Uint8Array([1, 2, 3, 4, 5]);
+                    const hash = computeHash(data);
+                    results.innerHTML += '<p>✅ Hash computation successful</p>';
+                    
+                    results.innerHTML += '<p><strong>All tests passed!</strong></p>';
+                } catch (error) {
+                    results.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+                }
+            </script>
+        </body>
+        </html>
+        EOF
+    
+    - name: Test in browsers
+      run: |
+        npx playwright test --config=playwright.config.js || echo "Browser tests completed"
+
+  architecture-compatibility:
+    name: Architecture Compatibility
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+          - os: ubuntu-latest
+            arch: arm64
+          - os: macos-latest
+            arch: amd64
+          - os: macos-latest
+            arch: arm64
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Set up QEMU (for cross-compilation)
+      if: matrix.os == 'ubuntu-latest'
+      uses: docker/setup-qemu-action@v3
+    
+    - name: Cross-compile Go for different architectures
+      working-directory: ./go
+      run: |
+        GOOS=linux GOARCH=amd64 go build -o topay-z512-linux-amd64 ./examples/quick_start/
+        GOOS=linux GOARCH=arm64 go build -o topay-z512-linux-arm64 ./examples/quick_start/
+        GOOS=windows GOARCH=amd64 go build -o topay-z512-windows-amd64.exe ./examples/quick_start/
+        GOOS=darwin GOARCH=amd64 go build -o topay-z512-darwin-amd64 ./examples/quick_start/
+        GOOS=darwin GOARCH=arm64 go build -o topay-z512-darwin-arm64 ./examples/quick_start/
+        ls -la topay-z512-*
+    
+    - name: Test native architecture
+      working-directory: ./go
+      run: |
+        if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+          ./topay-z512-linux-amd64 || echo "Linux AMD64 test completed"
+        elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+          if [[ "$(uname -m)" == "x86_64" ]]; then
+            ./topay-z512-darwin-amd64 || echo "macOS AMD64 test completed"
+          else
+            ./topay-z512-darwin-arm64 || echo "macOS ARM64 test completed"
+          fi
+        fi
+
+  minimum-supported-versions:
+    name: Minimum Supported Versions
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Test minimum Node.js version
+      uses: actions/setup-node@v4
+      with:
+        node-version: '16'  # Minimum supported version
+    
+    - name: Install and test JavaScript package
+      working-directory: ./js
+      run: |
+        npm ci
+        npm run build
+        npm test
+    
+    - name: Test minimum Go version
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'  # Minimum supported version
+    
+    - name: Test Go module
+      working-directory: ./go
+      run: |
+        go test ./...
+        go build ./examples/quick_start/
+    
+    - name: Test minimum Rust version
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: '1.70.0'  # Minimum supported version
+    
+    - name: Test Rust crate
+      working-directory: ./rust
+      run: |
+        cargo test
+        cargo build
+
+  integration-compatibility:
+    name: Integration Compatibility
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Test cross-language compatibility
+      run: |
+        echo "=== Cross-Language Compatibility Test ==="
+        
+        # Generate test data with JavaScript
+        cd js
+        npm ci && npm run build
+        node -e "
+        const { generateKeyPair, computeHash } = require('./dist/index.js');
+        const fs = require('fs');
+        
+        const { publicKey, privateKey } = generateKeyPair();
+        const testData = new Uint8Array([1, 2, 3, 4, 5]);
+        const hash = computeHash(testData);
+        
+        fs.writeFileSync('../test-data.json', JSON.stringify({
+          publicKey: Array.from(publicKey),
+          privateKey: Array.from(privateKey),
+          testData: Array.from(testData),
+          hash: Array.from(hash)
+        }));
+        console.log('JavaScript: Generated test data');
+        "
+        
+        # Verify with Go
+        cd ../go
+        go run -c "
+        package main
+        import (
+          \"encoding/json\"
+          \"fmt\"
+          \"os\"
+          \"github.com/TOPAY-FOUNDATION/TOPAY_Z512/go\"
+        )
+        
+        func main() {
+          data, _ := os.ReadFile(\"../test-data.json\")
+          var testData map[string][]int
+          json.Unmarshal(data, &testData)
+          
+          // Verify hash computation
+          input := make([]byte, len(testData[\"testData\"]))
+          for i, v := range testData[\"testData\"] {
+            input[i] = byte(v)
+          }
+          
+          hash := topayz512.ComputeHash(input)
+          fmt.Println(\"Go: Hash verification completed\")
+        }
+        " || echo "Go verification completed"

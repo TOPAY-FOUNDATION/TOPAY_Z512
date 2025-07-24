@@ -407,7 +407,7 @@ topayz512 = { version = "0.1.0", features = ["fragmentation"] }
 **Go (go.mod):**
 
 ```go
-require github.com/topay-foundation/topayz512-go v0.1.0
+require github.com/TOPAY-FOUNDATION/TOPAY_Z512/go v0.1.0
 ```
 
 **JavaScript (package.json):**

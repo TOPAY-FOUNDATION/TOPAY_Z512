@@ -13,7 +13,7 @@ This is the Go implementation of the TOPAY-Z512 cryptographic library, providing
 ## Installation
 
 ```bash
-go get github.com/topayfoundation/topayz512
+go get github.com/TOPAY-FOUNDATION/TOPAY_Z512/go
 ```
 
 ## Quick Start
@@ -23,7 +23,7 @@ package main
 
 import (
     "fmt"
-    "github.com/topayfoundation/topayz512"
+    "github.com/TOPAY-FOUNDATION/TOPAY_Z512/go"
 )
 
 func main() {

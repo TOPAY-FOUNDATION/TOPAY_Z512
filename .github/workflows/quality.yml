@@ -1,0 +1,285 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  GO_VERSION: '1.21'
+  RUST_VERSION: 'stable'
+
+jobs:
+  eslint:
+    name: ESLint (JavaScript/TypeScript)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install dependencies
+      working-directory: ./js
+      run: npm ci
+    
+    - name: Run ESLint
+      working-directory: ./js
+      run: |
+        npx eslint src/ --ext .ts,.js --format=json --output-file=eslint-results.json || true
+        npx eslint src/ --ext .ts,.js
+    
+    - name: Upload ESLint results
+      uses: actions/upload-artifact@v3
+      with:
+        name: eslint-results
+        path: js/eslint-results.json
+      if: always()
+
+  prettier:
+    name: Prettier (JavaScript/TypeScript)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install dependencies
+      working-directory: ./js
+      run: npm ci
+    
+    - name: Check Prettier formatting
+      working-directory: ./js
+      run: npx prettier --check "src/**/*.{ts,js,json}"
+
+  golangci-lint:
+    name: GolangCI-Lint (Go)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: latest
+        working-directory: ./go
+        args: --timeout=5m --out-format=json:golangci-results.json,colored-line-number
+    
+    - name: Upload golangci-lint results
+      uses: actions/upload-artifact@v3
+      with:
+        name: golangci-results
+        path: go/golangci-results.json
+      if: always()
+
+  gofmt:
+    name: Go Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Check gofmt
+      working-directory: ./go
+      run: |
+        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+          echo "The following files are not properly formatted:"
+          gofmt -s -l .
+          echo "Please run 'gofmt -s -w .' to fix formatting issues."
+          exit 1
+        fi
+
+  clippy:
+    name: Clippy (Rust)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ env.RUST_VERSION }}
+        components: clippy
+    
+    - name: Run Clippy
+      working-directory: ./rust
+      run: |
+        cargo clippy --all-targets --all-features -- -D warnings -A clippy::module_inception
+
+  rustfmt:
+    name: Rust Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ env.RUST_VERSION }}
+        components: rustfmt
+    
+    - name: Check rustfmt
+      working-directory: ./rust
+      run: cargo fmt --all -- --check
+
+  sonarcloud:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    if: github.repository == 'TOPAY-FOUNDATION/TOPAY_Z512'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v4.4.0
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install JavaScript dependencies
+      working-directory: ./js
+      run: npm ci
+    
+    - name: Run JavaScript tests with coverage
+      working-directory: ./js
+      run: npm run test:coverage || npm test
+    
+    - name: Setup Go environment
+      uses: actions/setup-go@v5.5.0
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Run Go tests with coverage
+      working-directory: ./go
+      run: |
+        go test -coverprofile=coverage.out -covermode=atomic ./...
+        go tool cover -html=coverage.out -o coverage.html
+    
+    - name: SonarQube Cloud Scan
+      uses: SonarSource/sonarcloud-github-action@v5.0.0 
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  complexity-analysis:
+    name: Code Complexity Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install complexity tools
+      run: |
+        npm install -g complexity-report
+        npm install -g jscpd
+    
+    - name: Analyze JavaScript complexity
+      working-directory: ./js
+      run: |
+        echo "=== JavaScript Complexity Analysis ==="
+        complexity-report src/ --format json --output complexity-report.json || true
+        complexity-report src/ || true
+    
+    - name: Check for code duplication
+      working-directory: ./js
+      run: |
+        echo "=== Code Duplication Analysis ==="
+        jscpd src/ --reporters json --output ./duplication-report.json || true
+        jscpd src/ || true
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Install gocyclo
+      run: go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+    
+    - name: Analyze Go complexity
+      working-directory: ./go
+      run: |
+        echo "=== Go Complexity Analysis ==="
+        gocyclo -over 10 . || true
+    
+    - name: Upload complexity reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: complexity-reports
+        path: |
+          js/complexity-report.json
+          js/duplication-report.json
+      if: always()
+
+  dependency-check:
+    name: Dependency Vulnerability Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install dependencies
+      working-directory: ./js
+      run: npm ci
+    
+    - name: Run npm audit
+      working-directory: ./js
+      run: |
+        npm audit --audit-level=moderate --json > npm-audit.json || true
+        npm audit --audit-level=moderate
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Install nancy
+      run: go install github.com/sonatypecommunity/nancy@latest
+    
+    - name: Check Go dependencies
+      working-directory: ./go
+      run: |
+        go list -json -deps ./... | nancy sleuth --output=json > nancy-report.json || true
+        go list -json -deps ./... | nancy sleuth || true
+    
+    - name: Upload dependency reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-reports
+        path: |
+          js/npm-audit.json
+          go/nancy-report.json
+      if: always()

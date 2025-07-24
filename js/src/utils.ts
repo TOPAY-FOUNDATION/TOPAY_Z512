@@ -270,7 +270,7 @@ export function getBufferPoolStats(): { totalPools: number; totalBuffers: number
   let totalBuffers = 0;
   const sizes: number[] = [];
   
-  for (const [size, pool] of Array.from(bufferPool.entries())) {
+  for (const [size, pool] of bufferPool.entries()) {
     totalBuffers += pool.length;
     sizes.push(size);
   }

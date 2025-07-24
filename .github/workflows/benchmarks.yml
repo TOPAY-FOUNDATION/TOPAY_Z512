@@ -1,0 +1,259 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 4 * * 0'  # Weekly on Sunday at 4 AM UTC
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  GO_VERSION: '1.21'
+  RUST_VERSION: 'stable'
+
+jobs:
+  js-benchmarks:
+    name: JavaScript Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install dependencies
+      working-directory: ./js
+      run: npm ci
+    
+    - name: Build package
+      working-directory: ./js
+      run: npm run build
+    
+    - name: Run benchmarks
+      working-directory: ./js
+      run: |
+        npm run benchmark || echo "No benchmark script found"
+        node -e "
+        const { generateKeyPair, computeHash } = require('./dist/index.js');
+        
+        console.log('=== JavaScript Performance Benchmarks ===');
+        
+        // Key generation benchmark
+        const keyGenStart = process.hrtime.bigint();
+        for (let i = 0; i < 100; i++) {
+          generateKeyPair();
+        }
+        const keyGenEnd = process.hrtime.bigint();
+        const keyGenTime = Number(keyGenEnd - keyGenStart) / 1000000; // Convert to ms
+        console.log(\`Key Generation (100 iterations): \${keyGenTime.toFixed(2)}ms\`);
+        console.log(\`Average per key: \${(keyGenTime / 100).toFixed(2)}ms\`);
+        
+        // Hash benchmark
+        const testData = new Uint8Array(1024).fill(42);
+        const hashStart = process.hrtime.bigint();
+        for (let i = 0; i < 1000; i++) {
+          computeHash(testData);
+        }
+        const hashEnd = process.hrtime.bigint();
+        const hashTime = Number(hashEnd - hashStart) / 1000000;
+        console.log(\`Hash Computation (1000 iterations, 1KB data): \${hashTime.toFixed(2)}ms\`);
+        console.log(\`Average per hash: \${(hashTime / 1000).toFixed(2)}ms\`);
+        console.log(\`Throughput: \${(1024 * 1000 / (hashTime / 1000) / 1024 / 1024).toFixed(2)} MB/s\`);
+        "
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: js-benchmark-results
+        path: js/benchmark-results.json
+      continue-on-error: true
+
+  go-benchmarks:
+    name: Go Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Run Go benchmarks
+      working-directory: ./go
+      run: |
+        echo "=== Go Performance Benchmarks ==="
+        go test -bench=. -benchmem -count=3 ./... | tee benchmark-results.txt
+        
+        # Run example benchmarks
+        if [ -f "examples/benchmark/main.go" ]; then
+          echo "=== Running benchmark example ==="
+          cd examples/benchmark
+          go run main.go
+        fi
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: go-benchmark-results
+        path: go/benchmark-results.txt
+
+  rust-benchmarks:
+    name: Rust Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ env.RUST_VERSION }}
+    
+    - name: Install criterion
+      working-directory: ./rust
+      run: |
+        if ! grep -q "criterion" Cargo.toml; then
+          echo "Adding criterion for benchmarks..."
+          cargo add --dev criterion --features html_reports
+        fi
+    
+    - name: Run Rust benchmarks
+      working-directory: ./rust
+      run: |
+        echo "=== Rust Performance Benchmarks ==="
+        cargo bench --all-features | tee benchmark-results.txt
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: rust-benchmark-results
+        path: rust/benchmark-results.txt
+
+  cross-platform-benchmarks:
+    name: Cross-Platform Benchmarks
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Run quick benchmark
+      working-directory: ./go
+      run: |
+        echo "=== Quick Benchmark on ${{ matrix.os }} ==="
+        go run examples/quick_start/main.go | grep -E "(Key Generation|Hash|Performance|Throughput)" || true
+    
+    - name: System info
+      run: |
+        echo "=== System Information ==="
+        echo "OS: ${{ matrix.os }}"
+        echo "Architecture: $(uname -m 2>/dev/null || echo 'Windows')"
+        echo "CPU Info:"
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          cat /proc/cpuinfo | grep "model name" | head -1
+          cat /proc/meminfo | grep "MemTotal"
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          sysctl -n machdep.cpu.brand_string
+          sysctl -n hw.memsize | awk '{print "MemTotal: " $1/1024/1024 " MB"}'
+        elif [ "$RUNNER_OS" = "Windows" ]; then
+          wmic cpu get name /value | grep Name
+          wmic computersystem get TotalPhysicalMemory /value | grep TotalPhysicalMemory
+        fi
+
+  performance-regression:
+    name: Performance Regression Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Install benchstat
+      run: go install golang.org/x/perf/cmd/benchstat@latest
+    
+    - name: Run benchmarks on main branch
+      run: |
+        git checkout main
+        cd go
+        go test -bench=. -count=5 ./... > ../main-bench.txt
+    
+    - name: Run benchmarks on current branch
+      run: |
+        git checkout ${{ github.head_ref }}
+        cd go
+        go test -bench=. -count=5 ./... > ../pr-bench.txt
+    
+    - name: Compare benchmarks
+      run: |
+        echo "=== Performance Comparison ==="
+        benchstat main-bench.txt pr-bench.txt | tee performance-comparison.txt
+    
+    - name: Upload comparison results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-comparison
+        path: performance-comparison.txt
+    
+    - name: Comment PR with results
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const comparison = fs.readFileSync('performance-comparison.txt', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## 📊 Performance Comparison\n\n\`\`\`\n${comparison}\n\`\`\``
+          });
+
+  memory-profiling:
+    name: Memory Profiling
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Install pprof tools
+      run: go install github.com/google/pprof@latest
+    
+    - name: Run memory profiling
+      working-directory: ./go
+      run: |
+        echo "=== Memory Profiling ==="
+        go test -memprofile=mem.prof -bench=. ./...
+        go tool pprof -text mem.prof | head -20 | tee memory-profile.txt
+    
+    - name: Upload memory profile
+      uses: actions/upload-artifact@v3
+      with:
+        name: memory-profile
+        path: go/memory-profile.txt

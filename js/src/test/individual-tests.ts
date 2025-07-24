@@ -3,6 +3,8 @@
  * Runs each test category separately for detailed verification
  */
 
+/// <reference types="node" />
+
 // Import all test functions from test.ts
 import {
   testConstants,

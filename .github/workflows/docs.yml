@@ -1,0 +1,281 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'js/**'
+      - 'go/**'
+      - 'rust/**'
+      - 'docs/**'
+      - '*.md'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'js/**'
+      - 'go/**'
+      - 'rust/**'
+      - 'docs/**'
+      - '*.md'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  GO_VERSION: '1.21'
+  RUST_VERSION: 'stable'
+
+jobs:
+  build-js-docs:
+    name: Build JavaScript Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install dependencies
+      working-directory: ./js
+      run: npm ci
+    
+    - name: Build TypeScript
+      working-directory: ./js
+      run: npm run build
+    
+    - name: Generate TypeDoc documentation
+      working-directory: ./js
+      run: npx typedoc src/index.ts --out docs --theme default
+    
+    - name: Upload JavaScript docs
+      uses: actions/upload-artifact@v3
+      with:
+        name: js-docs
+        path: js/docs/
+
+  build-go-docs:
+    name: Build Go Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Install godoc
+      run: go install golang.org/x/tools/cmd/godoc@latest
+    
+    - name: Generate Go documentation
+      working-directory: ./go
+      run: |
+        mkdir -p docs
+        godoc -html . > docs/index.html
+    
+    - name: Upload Go docs
+      uses: actions/upload-artifact@v3
+      with:
+        name: go-docs
+        path: go/docs/
+
+  build-rust-docs:
+    name: Build Rust Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ env.RUST_VERSION }}
+    
+    - name: Generate Rust documentation
+      working-directory: ./rust
+      run: cargo doc --no-deps --document-private-items
+    
+    - name: Upload Rust docs
+      uses: actions/upload-artifact@v3
+      with:
+        name: rust-docs
+        path: rust/target/doc/
+
+  deploy-docs:
+    name: Deploy Documentation to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [build-js-docs, build-go-docs, build-rust-docs]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download JavaScript docs
+      uses: actions/download-artifact@v3
+      with:
+        name: js-docs
+        path: ./docs-site/js/
+    
+    - name: Download Go docs
+      uses: actions/download-artifact@v3
+      with:
+        name: go-docs
+        path: ./docs-site/go/
+    
+    - name: Download Rust docs
+      uses: actions/download-artifact@v3
+      with:
+        name: rust-docs
+        path: ./docs-site/rust/
+    
+    - name: Create documentation index
+      run: |
+        mkdir -p docs-site
+        cat > docs-site/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>TOPAY-Z512 Documentation</title>
+            <style>
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 2rem;
+                    line-height: 1.6;
+                    color: #333;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 3rem;
+                    padding: 2rem;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border-radius: 10px;
+                }
+                .docs-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 2rem;
+                    margin-bottom: 3rem;
+                }
+                .doc-card {
+                    border: 1px solid #e1e5e9;
+                    border-radius: 8px;
+                    padding: 1.5rem;
+                    text-decoration: none;
+                    color: inherit;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
+                .doc-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+                .doc-card h3 {
+                    margin-top: 0;
+                    color: #2c3e50;
+                }
+                .features {
+                    background: #f8f9fa;
+                    padding: 2rem;
+                    border-radius: 8px;
+                    margin-top: 2rem;
+                }
+                .features ul {
+                    columns: 2;
+                    column-gap: 2rem;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>TOPAY-Z512 Documentation</h1>
+                <p>Quantum-safe cryptographic library with multi-language support</p>
+            </div>
+            
+            <div class="docs-grid">
+                <a href="js/" class="doc-card">
+                    <h3>📦 JavaScript/TypeScript</h3>
+                    <p>Complete API documentation for the JavaScript/TypeScript implementation of TOPAY-Z512.</p>
+                    <p><strong>Installation:</strong> <code>npm install @topayfoundation/topayz512</code></p>
+                </a>
+                
+                <a href="go/" class="doc-card">
+                    <h3>🐹 Go</h3>
+                    <p>Go package documentation with examples and API reference.</p>
+                    <p><strong>Installation:</strong> <code>go get github.com/TOPAY-FOUNDATION/TOPAY_Z512/go</code></p>
+                </a>
+                
+                <a href="rust/" class="doc-card">
+                    <h3>🦀 Rust</h3>
+                    <p>Rust crate documentation with comprehensive API coverage.</p>
+                    <p><strong>Installation:</strong> <code>cargo add topay-z512</code></p>
+                </a>
+            </div>
+            
+            <div class="features">
+                <h2>Key Features</h2>
+                <ul>
+                    <li>Quantum-safe cryptographic algorithms</li>
+                    <li>High-performance key generation</li>
+                    <li>Secure hash functions</li>
+                    <li>Key encapsulation mechanisms (KEM)</li>
+                    <li>Data fragmentation and reconstruction</li>
+                    <li>Cross-platform compatibility</li>
+                    <li>Memory-safe implementations</li>
+                    <li>Comprehensive test coverage</li>
+                </ul>
+            </div>
+        </body>
+        </html>
+        EOF
+    
+    - name: Setup Pages
+      uses: actions/configure-pages@v3
+    
+    - name: Upload to GitHub Pages
+      uses: actions/upload-pages-artifact@v2
+      with:
+        path: ./docs-site
+    
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2
+
+  check-docs:
+    name: Check Documentation Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install markdownlint
+      run: npm install -g markdownlint-cli
+    
+    - name: Lint Markdown files
+      run: markdownlint '**/*.md' --ignore node_modules --ignore target
+    
+    - name: Check for broken links
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: 'yes'
+        use-verbose-mode: 'yes'
+        config-file: '.github/markdown-link-check-config.json'

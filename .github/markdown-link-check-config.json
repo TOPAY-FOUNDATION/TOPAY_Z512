@@ -1,0 +1,27 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^https://github\\.com/TOPAY-FOUNDATION/TOPAY_Z512"
+    },
+    {
+      "pattern": "^https://www\\.npmjs\\.com/package/@topayfoundation/topayz512"
+    },
+    {
+      "pattern": "^https://crates\\.io/crates/topay-z512"
+    },
+    {
+      "pattern": "^https://pkg\\.go\\.dev/github\\.com/TOPAY-FOUNDATION/TOPAY_Z512/go"
+    },
+    {
+      "pattern": "^https://docs\\.rs/topay-z512"
+    },
+    {
+      "pattern": "^https://topay-foundation\\.github\\.io/TOPAY_Z512"
+    }
+  ],
+  "timeout": "30s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackRetryDelay": "30s",
+  "aliveStatusCodes": [200, 206]
+}

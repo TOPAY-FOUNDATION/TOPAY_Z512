@@ -418,6 +418,6 @@ For security issues, please email <security@topay.foundation> instead of using t
 ## Support
 
 - Documentation: [https://docs.topay.foundation/topayz512](https://docs.topay.foundation/topayz512)
-- Issues: [GitHub Issues](https://github.com/topayfoundation/topayz512/issues)
+- Issues: [GitHub Issues](https://github.com/TOPAY-FOUNDATION/TOPAY_Z512/issues)
 - Community: [Discord](https://discord.gg/topay)
 - Email: <support@topayfoundation.com>
