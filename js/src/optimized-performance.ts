@@ -1,6 +1,6 @@
 /**
  * Optimized Performance Module for TOPAY-Z512
- * 
+ *
  * This module demonstrates the performance improvements made to the JavaScript implementation:
  * 1. Hash function memoization for small data
  * 2. Batch processing with configurable concurrency
@@ -63,13 +63,16 @@ let metrics: OptimizationMetrics = {
 /**
  * Benchmarks hash operations with and without optimizations
  */
-export async function benchmarkHashOptimizations(dataSize: number, iterations: number): Promise<{
+export async function benchmarkHashOptimizations(
+  dataSize: number,
+  iterations: number
+): Promise<{
   withOptimizations: number;
   withoutOptimizations: number;
   improvement: number;
 }> {
   const testData = await secureRandom(dataSize);
-  
+
   // Benchmark with optimizations
   const startOptimized = performance.now();
   for (let i = 0; i < iterations; i++) {
@@ -77,7 +80,7 @@ export async function benchmarkHashOptimizations(dataSize: number, iterations: n
   }
   const endOptimized = performance.now();
   const withOptimizations = endOptimized - startOptimized;
-  
+
   // Clear cache and benchmark without optimizations
   clearHashCache();
   const startUnoptimized = performance.now();
@@ -90,9 +93,9 @@ export async function benchmarkHashOptimizations(dataSize: number, iterations: n
   }
   const endUnoptimized = performance.now();
   const withoutOptimizations = endUnoptimized - startUnoptimized;
-  
+
   const improvement = ((withoutOptimizations - withOptimizations) / withoutOptimizations) * 100;
-  
+
   return {
     withOptimizations,
     withoutOptimizations,
@@ -108,18 +111,18 @@ export async function benchmarkBatchConcurrency(
   concurrencyLevels: number[]
 ): Promise<{ concurrency: number; time: number }[]> {
   const results: { concurrency: number; time: number }[] = [];
-  
+
   for (const concurrency of concurrencyLevels) {
     const start = performance.now();
     await batchHash(dataItems, concurrency);
     const end = performance.now();
-    
+
     results.push({
       concurrency,
       time: end - start
     });
   }
-  
+
   return results;
 }
 
@@ -135,24 +138,24 @@ export async function benchmarkKEMOptimizations(iterations: number): Promise<{
   const startCached = performance.now();
   for (let i = 0; i < iterations; i++) {
     const keyPair = await kemKeyGen(true); // Enable caching
-    const { ciphertext, sharedSecret } = await kemEncapsulate(keyPair.publicKey);
+    const { ciphertext /* , sharedSecret */ } = await kemEncapsulate(keyPair.publicKey);
     await kemDecapsulate(keyPair.secretKey, ciphertext);
   }
   const endCached = performance.now();
   const withCaching = endCached - startCached;
-  
+
   // Benchmark without caching
   const startUncached = performance.now();
   for (let i = 0; i < iterations; i++) {
     const keyPair = await kemKeyGen(false); // Disable caching
-    const { ciphertext, sharedSecret } = await kemEncapsulate(keyPair.publicKey);
+    const { ciphertext /* , sharedSecret */ } = await kemEncapsulate(keyPair.publicKey);
     await kemDecapsulate(keyPair.secretKey, ciphertext);
   }
   const endUncached = performance.now();
   const withoutCaching = endUncached - startUncached;
-  
+
   const improvement = ((withoutCaching - withCaching) / withoutCaching) * 100;
-  
+
   return {
     withCaching,
     withoutCaching,
@@ -170,30 +173,34 @@ export async function runOptimizationBenchmarks(): Promise<{
   bufferPoolStats: ReturnType<typeof getBufferPoolStats>;
 }> {
   console.log('🚀 Running TOPAY-Z512 Optimization Benchmarks...\n');
-  
+
   // Hash optimizations benchmark
   console.log('📊 Benchmarking hash optimizations...');
   const hashOptimizations = await benchmarkHashOptimizations(1024, 100);
   console.log(`Hash optimization improvement: ${hashOptimizations.improvement.toFixed(2)}%\n`);
-  
+
   // Batch concurrency benchmark
   console.log('⚡ Benchmarking batch concurrency...');
   const testData = await Promise.all(Array.from({ length: 50 }, () => secureRandom(512)));
   const batchConcurrency = await benchmarkBatchConcurrency(testData, [1, 2, 4, 8, 16]);
-  const optimalConcurrency = batchConcurrency.reduce((min, curr) => 
+  const optimalConcurrency = batchConcurrency.reduce((min, curr) =>
     curr.time < min.time ? curr : min
   );
-  console.log(`Optimal concurrency level: ${optimalConcurrency.concurrency} (${optimalConcurrency.time.toFixed(2)}ms)\n`);
-  
+  console.log(
+    `Optimal concurrency level: ${optimalConcurrency.concurrency} (${optimalConcurrency.time.toFixed(2)}ms)\n`
+  );
+
   // KEM optimizations benchmark
   console.log('🔐 Benchmarking KEM optimizations...');
   const kemOptimizations = await benchmarkKEMOptimizations(20);
   console.log(`KEM caching improvement: ${kemOptimizations.improvement.toFixed(2)}%\n`);
-  
+
   // Buffer pool statistics
   const bufferPoolStats = getBufferPoolStats();
-  console.log(`📈 Buffer pool stats: ${bufferPoolStats.totalBuffers} buffers across ${bufferPoolStats.totalPools} pools\n`);
-  
+  console.log(
+    `📈 Buffer pool stats: ${bufferPoolStats.totalBuffers} buffers across ${bufferPoolStats.totalPools} pools\n`
+  );
+
   return {
     hashOptimizations,
     batchConcurrency,
@@ -208,7 +215,7 @@ export async function runOptimizationBenchmarks(): Promise<{
 export function clearOptimizationCaches(): void {
   clearHashCache();
   clearBufferPools();
-  
+
   // Reset metrics
   metrics = {
     hashCacheHits: 0,
@@ -239,12 +246,12 @@ export function estimateOptimizationMemoryUsage(): {
   total: number;
 } {
   const bufferStats = getBufferPoolStats();
-  
+
   // Rough estimates in bytes
   const hashCache = 1024 * 100; // Assume 100 cached hashes of 1KB each
   const bufferPools = bufferStats.totalBuffers * 512; // Average buffer size
   const kemCache = 64 * 100; // Assume 100 cached key pairs
-  
+
   return {
     hashCache,
     bufferPools,
@@ -259,7 +266,7 @@ export function estimateOptimizationMemoryUsage(): {
 export async function generateOptimizationReport(): Promise<string> {
   const benchmarks = await runOptimizationBenchmarks();
   const memoryUsage = estimateOptimizationMemoryUsage();
-  
+
   return `
 # TOPAY-Z512 JavaScript Optimization Report
 
@@ -271,8 +278,8 @@ export async function generateOptimizationReport(): Promise<string> {
 - **Without optimizations**: ${benchmarks.hashOptimizations.withoutOptimizations.toFixed(2)}ms
 
 ### Batch Processing
-- **Optimal concurrency**: ${benchmarks.batchConcurrency.reduce((min, curr) => curr.time < min.time ? curr : min).concurrency}
-- **Performance gain**: Up to ${((Math.max(...benchmarks.batchConcurrency.map(b => b.time)) - Math.min(...benchmarks.batchConcurrency.map(b => b.time))) / Math.max(...benchmarks.batchConcurrency.map(b => b.time)) * 100).toFixed(2)}%
+- **Optimal concurrency**: ${benchmarks.batchConcurrency.reduce((min, curr) => (curr.time < min.time ? curr : min)).concurrency}
+- **Performance gain**: Up to ${(((Math.max(...benchmarks.batchConcurrency.map(b => b.time)) - Math.min(...benchmarks.batchConcurrency.map(b => b.time))) / Math.max(...benchmarks.batchConcurrency.map(b => b.time))) * 100).toFixed(2)}%
 
 ### KEM Operations
 - **Caching improvement**: ${benchmarks.kemOptimizations.improvement.toFixed(2)}%

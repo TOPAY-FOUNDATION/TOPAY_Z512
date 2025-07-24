@@ -25,21 +25,23 @@
 extern crate alloc;
 
 #[cfg(not(feature = "std"))]
-use alloc::{vec::Vec, string::String};
+use alloc::{string::String, vec::Vec};
 
+pub mod error;
 pub mod hash;
 pub mod kem;
 pub mod keypair;
-pub mod error;
 
 #[cfg(feature = "fragmentation")]
 pub mod fragment;
 
 // Re-export main types for convenience
+pub use error::{Result, TopayzError};
 pub use hash::Hash;
-pub use kem::{Kem, PublicKey as KemPublicKey, SecretKey as KemSecretKey, Ciphertext, SharedSecret};
+pub use kem::{
+    Ciphertext, Kem, PublicKey as KemPublicKey, SecretKey as KemSecretKey, SharedSecret,
+};
 pub use keypair::{KeyPair, PrivateKey, PublicKey};
-pub use error::{TopayzError, Result};
 
 /// Library version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -72,13 +74,13 @@ pub const KEM_SHARED_SECRET_SIZE: usize = 64;
 pub mod perf {
     /// Optimal batch size for key generation
     pub const OPTIMAL_BATCH_SIZE: usize = 16;
-    
+
     /// Cache line size for alignment optimization
     pub const CACHE_LINE_SIZE: usize = 64;
-    
+
     /// SIMD vector width (256-bit AVX2)
     pub const SIMD_WIDTH: usize = 32;
-    
+
     /// Memory prefetch distance
     pub const PREFETCH_DISTANCE: usize = 64;
 }
@@ -86,21 +88,21 @@ pub mod perf {
 /// Utility functions for high-performance operations
 pub mod utils {
     use crate::Result;
-    
+
     /// Fast constant-time comparison for cryptographic data
     #[inline(always)]
     pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
         if a.len() != b.len() {
             return false;
         }
-        
+
         let mut result = 0u8;
         for (x, y) in a.iter().zip(b.iter()) {
             result |= x ^ y;
         }
         result == 0
     }
-    
+
     /// Secure memory zeroing that won't be optimized away
     #[inline(always)]
     pub fn secure_zero(data: &mut [u8]) {
@@ -111,55 +113,58 @@ pub mod utils {
             }
         }
     }
-    
+
     /// Fast hex encoding optimized for performance
     #[inline]
     pub fn fast_hex_encode(data: &[u8]) -> String {
         const HEX_CHARS: &[u8] = b"0123456789abcdef";
         let mut result = String::with_capacity(data.len() * 2);
-        
+
         for &byte in data {
             result.push(HEX_CHARS[(byte >> 4) as usize] as char);
             result.push(HEX_CHARS[(byte & 0xf) as usize] as char);
         }
-        
+
         result
     }
-    
+
     /// Fast hex decoding optimized for performance
     pub fn fast_hex_decode(hex: &str) -> Result<Vec<u8>> {
         if hex.len() % 2 != 0 {
-            return Err(crate::TopayzError::InvalidInput("Odd hex length".to_string()));
+            return Err(crate::TopayzError::InvalidInput(
+                "Odd hex length".to_string(),
+            ));
         }
-        
+
         let mut result = Vec::with_capacity(hex.len() / 2);
         let hex_bytes = hex.as_bytes();
-        
+
         for chunk in hex_bytes.chunks_exact(2) {
             let high = hex_char_to_nibble(chunk[0])?;
             let low = hex_char_to_nibble(chunk[1])?;
             result.push((high << 4) | low);
         }
-        
+
         Ok(result)
     }
-    
+
     #[inline(always)]
     fn hex_char_to_nibble(c: u8) -> Result<u8> {
         match c {
             b'0'..=b'9' => Ok(c - b'0'),
             b'a'..=b'f' => Ok(c - b'a' + 10),
             b'A'..=b'F' => Ok(c - b'A' + 10),
-            _ => Err(crate::TopayzError::InvalidInput("Invalid hex character".to_string())),
+            _ => Err(crate::TopayzError::InvalidInput(
+                "Invalid hex character".to_string(),
+            )),
         }
     }
-    
+
     /// Memory-aligned allocation for performance-critical operations
     #[cfg(feature = "std")]
     pub fn aligned_alloc(size: usize, alignment: usize) -> Vec<u8> {
-        let layout = std::alloc::Layout::from_size_align(size, alignment)
-            .expect("Invalid layout");
-        
+        let layout = std::alloc::Layout::from_size_align(size, alignment).expect("Invalid layout");
+
         unsafe {
             let ptr = std::alloc::alloc_zeroed(layout);
             if ptr.is_null() {
@@ -174,7 +179,7 @@ pub mod utils {
 #[cfg(feature = "benchmark")]
 pub mod bench {
     use std::time::{Duration, Instant};
-    
+
     /// Simple benchmark runner
     pub fn benchmark<F, R>(name: &str, iterations: usize, mut f: F) -> Duration
     where
@@ -184,24 +189,29 @@ pub mod bench {
         for _ in 0..10 {
             let _ = f();
         }
-        
+
         let start = Instant::now();
         for _ in 0..iterations {
             let _ = f();
         }
         let elapsed = start.elapsed();
-        
-        println!("{}: {} iterations in {:?} ({:?} per iteration)", 
-                 name, iterations, elapsed, elapsed / iterations as u32);
-        
+
+        println!(
+            "{}: {} iterations in {:?} ({:?} per iteration)",
+            name,
+            iterations,
+            elapsed,
+            elapsed / iterations as u32
+        );
+
         elapsed
     }
-    
+
     /// Memory usage profiler
     pub struct MemoryProfiler {
         start_usage: usize,
     }
-    
+
     impl MemoryProfiler {
         /// Create a new memory profiler
         pub fn new() -> Self {
@@ -209,7 +219,7 @@ pub mod bench {
                 start_usage: get_memory_usage(),
             }
         }
-        
+
         /// Report memory usage delta for an operation
         pub fn report(&self, operation: &str) {
             let current_usage = get_memory_usage();
@@ -217,11 +227,11 @@ pub mod bench {
             println!("{}: Memory delta: {} bytes", operation, delta);
         }
     }
-    
+
     #[cfg(target_os = "linux")]
     fn get_memory_usage() -> usize {
         use std::fs;
-        
+
         if let Ok(status) = fs::read_to_string("/proc/self/status") {
             for line in status.lines() {
                 if line.starts_with("VmRSS:") {
@@ -235,7 +245,7 @@ pub mod bench {
         }
         0
     }
-    
+
     #[cfg(not(target_os = "linux"))]
     fn get_memory_usage() -> usize {
         0 // Placeholder for other platforms
@@ -260,7 +270,7 @@ pub mod features {
             false
         }
     }
-    
+
     /// Check if hardware random number generator is available
     #[inline]
     pub fn has_hardware_rng() -> bool {
@@ -273,7 +283,7 @@ pub mod features {
             false
         }
     }
-    
+
     /// Get optimal number of threads for parallel operations
     pub fn optimal_thread_count() -> usize {
         #[cfg(feature = "std")]
@@ -293,34 +303,34 @@ pub mod features {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_constant_time_eq() {
         let a = [1, 2, 3, 4];
         let b = [1, 2, 3, 4];
         let c = [1, 2, 3, 5];
-        
+
         assert!(utils::constant_time_eq(&a, &b));
         assert!(!utils::constant_time_eq(&a, &c));
     }
-    
+
     #[test]
     fn test_hex_encoding() {
         let data = [0x12, 0x34, 0xab, 0xcd];
         let hex = utils::fast_hex_encode(&data);
         assert_eq!(hex, "1234abcd");
-        
+
         let decoded = utils::fast_hex_decode(&hex).unwrap();
         assert_eq!(decoded, data);
     }
-    
+
     #[test]
     fn test_secure_zero() {
         let mut data = [1, 2, 3, 4, 5];
         utils::secure_zero(&mut data);
         assert_eq!(data, [0, 0, 0, 0, 0]);
     }
-    
+
     #[test]
     fn test_feature_detection() {
         // These should not panic

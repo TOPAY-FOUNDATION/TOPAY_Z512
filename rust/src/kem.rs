@@ -1,11 +1,11 @@
 //! Optimized Key Encapsulation Mechanism (KEM) for TOPAY-Z512
-//! 
+//!
 //! This module provides a high-performance KEM implementation for demonstration purposes.
 //! In production, this would use a proper post-quantum KEM like Kyber or NTRU.
 
-use std::time::{SystemTime, UNIX_EPOCH};
-use crate::error::{TopayzError, Result};
+use crate::error::{Result, TopayzError};
 use crate::hash::Hash;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// KEM public key for encapsulation with optimized layout
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -44,7 +44,7 @@ impl OptimizedRng {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos() as u64;
-        
+
         // Initialize with better entropy using multiple sources
         let state = [
             now,
@@ -52,7 +52,7 @@ impl OptimizedRng {
             now.wrapping_mul(0xBF58476D1CE4E5B9),
             now.wrapping_mul(0x94D049BB133111EB),
         ];
-        
+
         Self { state }
     }
 
@@ -64,7 +64,7 @@ impl OptimizedRng {
             let random_u64 = self.next_u64();
             let remaining = bytes.len() - i;
             let to_copy = core::cmp::min(8, remaining);
-            
+
             // Copy bytes efficiently
             let random_bytes = random_u64.to_le_bytes();
             bytes[i..i + to_copy].copy_from_slice(&random_bytes[..to_copy]);
@@ -98,7 +98,7 @@ impl Kem {
     #[inline]
     pub fn keygen() -> (PublicKey, SecretKey) {
         let mut rng = OptimizedRng::new();
-        
+
         // Generate secret key with better entropy
         let mut secret_bytes = [0u8; 64];
         rng.next_bytes(&mut secret_bytes);
@@ -109,8 +109,12 @@ impl Kem {
         public_bytes.copy_from_slice(public_hash.as_bytes());
 
         (
-            PublicKey { bytes: public_bytes },
-            SecretKey { bytes: secret_bytes },
+            PublicKey {
+                bytes: public_bytes,
+            },
+            SecretKey {
+                bytes: secret_bytes,
+            },
         )
     }
 
@@ -118,7 +122,7 @@ impl Kem {
     #[inline]
     pub fn encapsulate(public_key: &PublicKey) -> (Ciphertext, SharedSecret) {
         let mut rng = OptimizedRng::new();
-        
+
         // Generate random ephemeral key with better entropy
         let mut ephemeral = [0u8; 64];
         rng.next_bytes(&mut ephemeral);
@@ -133,8 +137,12 @@ impl Kem {
         shared_secret_bytes.copy_from_slice(shared_secret_hash.as_bytes());
 
         (
-            Ciphertext { bytes: ciphertext_bytes },
-            SharedSecret { bytes: shared_secret_bytes },
+            Ciphertext {
+                bytes: ciphertext_bytes,
+            },
+            SharedSecret {
+                bytes: shared_secret_bytes,
+            },
         )
     }
 
@@ -151,14 +159,16 @@ impl Kem {
         let mut shared_secret_bytes = [0u8; 64];
         shared_secret_bytes.copy_from_slice(shared_secret_hash.as_bytes());
 
-        SharedSecret { bytes: shared_secret_bytes }
+        SharedSecret {
+            bytes: shared_secret_bytes,
+        }
     }
 
     /// Batch key generation for improved performance
     pub fn batch_keygen(count: usize) -> Vec<(PublicKey, SecretKey)> {
         let mut keypairs = Vec::with_capacity(count);
         let mut rng = OptimizedRng::new();
-        
+
         for _ in 0..count {
             // Generate secret key
             let mut secret_bytes = [0u8; 64];
@@ -170,11 +180,15 @@ impl Kem {
             public_bytes.copy_from_slice(public_hash.as_bytes());
 
             keypairs.push((
-                PublicKey { bytes: public_bytes },
-                SecretKey { bytes: secret_bytes },
+                PublicKey {
+                    bytes: public_bytes,
+                },
+                SecretKey {
+                    bytes: secret_bytes,
+                },
             ));
         }
-        
+
         keypairs
     }
 
@@ -182,7 +196,7 @@ impl Kem {
     pub fn batch_encapsulate(public_keys: &[PublicKey]) -> Vec<(Ciphertext, SharedSecret)> {
         let mut results = Vec::with_capacity(public_keys.len());
         let mut rng = OptimizedRng::new();
-        
+
         for public_key in public_keys {
             // Generate random ephemeral key
             let mut ephemeral = [0u8; 64];
@@ -196,11 +210,15 @@ impl Kem {
             shared_secret_bytes.copy_from_slice(shared_secret_hash.as_bytes());
 
             results.push((
-                Ciphertext { bytes: ciphertext_bytes },
-                SharedSecret { bytes: shared_secret_bytes },
+                Ciphertext {
+                    bytes: ciphertext_bytes,
+                },
+                SharedSecret {
+                    bytes: shared_secret_bytes,
+                },
             ));
         }
-        
+
         results
     }
 }
@@ -219,7 +237,7 @@ impl PublicKey {
         }
 
         let mut bytes = [0u8; 64];
-        
+
         // Optimized hex parsing
         for i in 0..64 {
             let hex_byte = &hex[i * 2..i * 2 + 2];
@@ -271,7 +289,7 @@ impl SecretKey {
         }
 
         let mut bytes = [0u8; 64];
-        
+
         // Optimized hex parsing
         for i in 0..64 {
             let hex_byte = &hex[i * 2..i * 2 + 2];
@@ -308,7 +326,9 @@ impl SecretKey {
         let public_hash = Hash::new(&self.bytes);
         let mut public_bytes = [0u8; 64];
         public_bytes.copy_from_slice(public_hash.as_bytes());
-        PublicKey { bytes: public_bytes }
+        PublicKey {
+            bytes: public_bytes,
+        }
     }
 
     /// Secure zero out secret key (for security)
@@ -331,7 +351,7 @@ impl Ciphertext {
         }
 
         let mut bytes = [0u8; 64];
-        
+
         // Optimized hex parsing
         for i in 0..64 {
             let hex_byte = &hex[i * 2..i * 2 + 2];
@@ -377,7 +397,7 @@ impl SharedSecret {
         }
 
         let mut bytes = [0u8; 64];
-        
+
         // Optimized hex parsing
         for i in 0..64 {
             let hex_byte = &hex[i * 2..i * 2 + 2];
@@ -449,7 +469,7 @@ mod tests {
         let (public_key, secret_key) = Kem::keygen();
         let (ciphertext, shared_secret1) = Kem::encapsulate(&public_key);
         let shared_secret2 = Kem::decapsulate(&secret_key, &ciphertext);
-        
+
         // Note: In this simplified implementation, the shared secrets won't match
         // because we're not implementing proper KEM semantics
         assert_eq!(shared_secret1.as_bytes().len(), 64);

@@ -1,0 +1,10 @@
+# Ignore test files for now
+src/test/**/*.ts
+
+# Ignore example files
+src/examples/**/*.ts
+
+# Ignore build output
+dist/
+node_modules/
+coverage/

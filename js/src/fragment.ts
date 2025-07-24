@@ -12,11 +12,11 @@ import {
   ReconstructionResult,
   EmptyDataError,
   FragmentationFailedError,
-  ReconstructionFailedError,
-  InvalidFragmentCountError
+  ReconstructionFailedError
+  // InvalidFragmentCountError
 } from './index';
 import { computeHash } from './hash';
-import { timestamp, copyBytes, constantTimeEqual } from './utils';
+import { timestamp, /* copyBytes, */ constantTimeEqual } from './utils';
 
 /**
  * Fragments data into smaller chunks for parallel processing
@@ -40,7 +40,7 @@ export async function fragmentData(
 
   // Calculate number of fragments needed
   const fragmentCount = Math.ceil(data.length / fragmentSize);
-  
+
   if (fragmentCount > MAX_FRAGMENTS) {
     throw new FragmentationFailedError();
   }
@@ -57,12 +57,12 @@ export async function fragmentData(
 
   // Create fragments
   const fragments: Fragment[] = [];
-  
+
   for (let i = 0; i < fragmentCount; i++) {
     const start = i * fragmentSize;
     const end = Math.min(start + fragmentSize, data.length);
     const fragmentData = data.slice(start, end);
-    
+
     fragments.push({
       index: i,
       data: fragmentData,
@@ -90,7 +90,7 @@ export async function reconstructData(fragments: Fragment[]): Promise<Reconstruc
   // Get metadata from first fragment
   const metadata = fragments[0]!.metadata;
   const expectedCount = metadata.fragmentCount;
-  
+
   // Check if we have all fragments
   const receivedIndices = new Set(fragments.map(f => f.index));
   const missingCount = expectedCount - receivedIndices.size;
@@ -107,7 +107,7 @@ export async function reconstructData(fragments: Fragment[]): Promise<Reconstruc
 
   // Sort fragments by index
   const sortedFragments = [...fragments].sort((a, b) => a.index - b.index);
-  
+
   // Validate fragment sequence
   for (let i = 0; i < sortedFragments.length; i++) {
     if (sortedFragments[i]!.index !== i) {
@@ -122,7 +122,7 @@ export async function reconstructData(fragments: Fragment[]): Promise<Reconstruc
   for (const fragment of sortedFragments) {
     const fragmentData = fragment.data;
     const copyLength = Math.min(fragmentData.length, metadata.originalSize - offset);
-    
+
     reconstructedData.set(fragmentData.slice(0, copyLength), offset);
     offset += copyLength;
   }
@@ -201,17 +201,20 @@ export async function validateFragment(fragment: Fragment): Promise<boolean> {
  * @param fragmentSize - Size of each fragment
  * @returns Estimated latency in milliseconds
  */
-export function estimateMobileLatency(dataSize: number, fragmentSize: number = FRAGMENT_SIZE): number {
+export function estimateMobileLatency(
+  dataSize: number,
+  fragmentSize: number = FRAGMENT_SIZE
+): number {
   const fragmentCount = Math.ceil(dataSize / fragmentSize);
-  
+
   // Base latency estimates for mobile devices (in ms)
   const baseFragmentationLatency = 2; // Per fragment
   const baseReconstructionLatency = 1.5; // Per fragment
   const networkLatency = 50; // Network overhead
-  
+
   const fragmentationTime = fragmentCount * baseFragmentationLatency;
   const reconstructionTime = fragmentCount * baseReconstructionLatency;
-  
+
   return fragmentationTime + reconstructionTime + networkLatency;
 }
 
@@ -235,26 +238,26 @@ export function getOptimalFragmentSize(
   };
 
   const constraint = constraints[deviceType];
-  
+
   // Start with default fragment size
   let fragmentSize = FRAGMENT_SIZE;
-  
+
   // Adjust based on data size
   if (dataSize < MIN_FRAGMENT_THRESHOLD) {
     return Math.min(dataSize, constraint.maxSize);
   }
-  
+
   // Adjust based on latency requirements
   let estimatedLatency = estimateMobileLatency(dataSize, fragmentSize);
-  
+
   while (estimatedLatency > maxLatency && fragmentSize > constraint.minSize) {
     fragmentSize = Math.max(fragmentSize * 0.8, constraint.minSize);
     estimatedLatency = estimateMobileLatency(dataSize, fragmentSize);
   }
-  
+
   // Ensure within device constraints
   fragmentSize = Math.max(constraint.minSize, Math.min(fragmentSize, constraint.maxSize));
-  
+
   return Math.floor(fragmentSize);
 }
 
@@ -272,7 +275,7 @@ export function serializeFragments(fragments: Fragment[]): string {
       checksum: Array.from(fragment.metadata.checksum)
     }
   }));
-  
+
   return JSON.stringify(serializable);
 }
 
@@ -285,11 +288,11 @@ export function serializeFragments(fragments: Fragment[]): string {
 export function deserializeFragments(serialized: string): Fragment[] {
   try {
     const data = JSON.parse(serialized);
-    
+
     if (!Array.isArray(data)) {
       throw new Error('Invalid fragment data format');
     }
-    
+
     return data.map(item => ({
       index: item.index,
       data: new Uint8Array(item.data),
@@ -331,11 +334,11 @@ export function decompressFragments(fragments: Fragment[]): Fragment[] {
 
 function runLengthEncode(data: Uint8Array): Uint8Array {
   if (data.length === 0) return data;
-  
+
   const encoded: number[] = [];
   let current = data[0]!;
   let count = 1;
-  
+
   for (let i = 1; i < data.length; i++) {
     if (data[i] === current && count < 255) {
       count++;
@@ -345,7 +348,7 @@ function runLengthEncode(data: Uint8Array): Uint8Array {
       count = 1;
     }
   }
-  
+
   encoded.push(count, current);
   return new Uint8Array(encoded);
 }
@@ -354,17 +357,17 @@ function runLengthDecode(encoded: Uint8Array): Uint8Array {
   if (encoded.length % 2 !== 0) {
     throw new Error('Invalid run-length encoded data');
   }
-  
+
   const decoded: number[] = [];
-  
+
   for (let i = 0; i < encoded.length; i += 2) {
     const count = encoded[i]!;
     const value = encoded[i + 1]!;
-    
+
     for (let j = 0; j < count; j++) {
       decoded.push(value);
     }
   }
-  
+
   return new Uint8Array(decoded);
 }

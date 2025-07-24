@@ -1,6 +1,6 @@
 /**
  * TOPAY-Z512 Cryptographic Library - Minimal Implementation
- * 
+ *
  * Quantum-safe cryptographic primitives for the TOPAY Foundation blockchain ecosystem.
  */
 
@@ -30,7 +30,7 @@ export async function computeHash(data: Uint8Array): Promise<Hash> {
   if (data.length === 0) {
     throw new Error('Empty data provided');
   }
-  
+
   const hash = createHash('sha512');
   hash.update(data);
   return new Uint8Array(hash.digest());
@@ -40,7 +40,7 @@ export async function computeHash(data: Uint8Array): Promise<Hash> {
 export async function generateKeyPair(): Promise<KeyPair> {
   const privateKey = await secureRandom(PRIVATE_KEY_SIZE);
   const publicKey = await derivePublicKey(privateKey);
-  
+
   return {
     privateKey,
     publicKey
@@ -52,7 +52,7 @@ export async function derivePublicKey(privateKey: PrivateKey): Promise<PublicKey
   if (privateKey.length !== PRIVATE_KEY_SIZE) {
     throw new Error('Invalid private key size');
   }
-  
+
   // Simple derivation using hash
   return computeHash(privateKey);
 }

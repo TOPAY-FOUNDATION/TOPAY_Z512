@@ -15,7 +15,9 @@ fn main() {
     println!("🎯 WHY IS KEM IMPORTANT?");
     println!("------------------------");
     println!("1. 🛡️  Quantum-Safe: Protects against future quantum computers");
-    println!("2. 🔒 Secure: Even if someone intercepts the communication, they can't get the secret");
+    println!(
+        "2. 🔒 Secure: Even if someone intercepts the communication, they can't get the secret"
+    );
     println!("3. 🚀 Efficient: Fast key exchange for secure communication");
     println!("4. 🌐 Internet-Ready: Perfect for secure web communications\n");
 
@@ -44,15 +46,27 @@ fn main() {
     // Step 4: Verification
     println!("Step 4: Verification");
     let secrets_match = alice_shared_secret.to_bytes() == bob_shared_secret.to_bytes();
-    println!("   🤝 Alice and Bob have the same secret: {}", secrets_match);
+    println!(
+        "   🤝 Alice and Bob have the same secret: {}",
+        secrets_match
+    );
     println!("   🔒 They can now use this secret for secure communication!\n");
 
     println!("📊 TECHNICAL DETAILS:");
     println!("---------------------");
-    println!("   Public Key Size:  {} bytes", bob_public_key.to_bytes().len());
-    println!("   Secret Key Size:  {} bytes", bob_secret_key.to_bytes().len());
+    println!(
+        "   Public Key Size:  {} bytes",
+        bob_public_key.to_bytes().len()
+    );
+    println!(
+        "   Secret Key Size:  {} bytes",
+        bob_secret_key.to_bytes().len()
+    );
     println!("   Ciphertext Size:  {} bytes", ciphertext.to_bytes().len());
-    println!("   Shared Secret:    {} bytes\n", alice_shared_secret.to_bytes().len());
+    println!(
+        "   Shared Secret:    {} bytes\n",
+        alice_shared_secret.to_bytes().len()
+    );
 
     println!("🌟 REAL-WORLD APPLICATIONS:");
     println!("---------------------------");

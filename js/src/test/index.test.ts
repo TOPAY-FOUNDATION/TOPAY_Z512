@@ -9,7 +9,7 @@ describe('TOPAY-Z512 Comprehensive Test Suite', () => {
     // Capture console output to prevent Jest from being confused by the custom test runner output
     const originalConsoleLog = console.log;
     const logs: string[] = [];
-    
+
     console.log = (...args: any[]) => {
       logs.push(args.join(' '));
     };
@@ -24,7 +24,7 @@ describe('TOPAY-Z512 Comprehensive Test Suite', () => {
     } finally {
       // Restore console.log
       console.log = originalConsoleLog;
-      
+
       // Optionally log the captured output for debugging
       if (process.env['VERBOSE_TESTS']) {
         logs.forEach(log => originalConsoleLog(log));

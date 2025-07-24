@@ -2,13 +2,13 @@
  * Key pair generation and management for TOPAY-Z512
  */
 
-import { 
-  PRIVATE_KEY_SIZE, 
-  PUBLIC_KEY_SIZE, 
-  PrivateKey, 
-  PublicKey, 
-  KeyPair,
-  InvalidKeySizeError 
+import {
+  PRIVATE_KEY_SIZE,
+  PUBLIC_KEY_SIZE,
+  PrivateKey,
+  PublicKey,
+  KeyPair
+  // InvalidKeySizeError
 } from './index';
 import { secureRandom, validateSize, copyBytes, constantTimeEqual, secureZero } from './utils';
 import { computeHash, deriveKey } from './hash';
@@ -20,10 +20,10 @@ import { computeHash, deriveKey } from './hash';
 export async function generateKeyPair(): Promise<KeyPair> {
   // Generate private key from secure random bytes
   const privateKey = await secureRandom(PRIVATE_KEY_SIZE);
-  
+
   // Derive public key from private key using hash-based derivation
   const publicKey = await derivePublicKey(privateKey);
-  
+
   return {
     privateKey,
     publicKey
@@ -38,11 +38,11 @@ export async function generateKeyPair(): Promise<KeyPair> {
  */
 export async function derivePublicKey(privateKey: PrivateKey): Promise<PublicKey> {
   validateSize(privateKey, PRIVATE_KEY_SIZE, 'private key');
-  
+
   // Use hash-based public key derivation for quantum safety
   const publicKey = await computeHash(privateKey);
   validateSize(publicKey, PUBLIC_KEY_SIZE, 'public key');
-  
+
   return publicKey;
 }
 
@@ -55,13 +55,13 @@ export async function generateKeyPairFromSeed(seed: Uint8Array): Promise<KeyPair
   if (seed.length < 32) {
     throw new Error('Seed must be at least 32 bytes');
   }
-  
+
   // Derive private key from seed
   const privateKey = await deriveKey(seed, new Uint8Array(16), 10000, PRIVATE_KEY_SIZE);
-  
+
   // Derive public key
   const publicKey = await derivePublicKey(privateKey);
-  
+
   return {
     privateKey,
     publicKey
@@ -77,12 +77,12 @@ export async function batchGenerateKeyPairs(count: number): Promise<KeyPair[]> {
   if (count <= 0) {
     throw new Error('Count must be positive');
   }
-  
+
   const promises: Promise<KeyPair>[] = [];
   for (let i = 0; i < count; i++) {
     promises.push(generateKeyPair());
   }
-  
+
   return Promise.all(promises);
 }
 
@@ -95,7 +95,7 @@ export async function validateKeyPair(keyPair: KeyPair): Promise<boolean> {
   try {
     validateSize(keyPair.privateKey, PRIVATE_KEY_SIZE, 'private key');
     validateSize(keyPair.publicKey, PUBLIC_KEY_SIZE, 'public key');
-    
+
     const derivedPublic = await derivePublicKey(keyPair.privateKey);
     return constantTimeEqual(keyPair.publicKey, derivedPublic);
   } catch {
@@ -109,25 +109,28 @@ export async function validateKeyPair(keyPair: KeyPair): Promise<boolean> {
  * @param index - Child key index
  * @returns Promise resolving to child key pair
  */
-export async function deriveChildKeyPair(parentPrivateKey: PrivateKey, index: number): Promise<KeyPair> {
+export async function deriveChildKeyPair(
+  parentPrivateKey: PrivateKey,
+  index: number
+): Promise<KeyPair> {
   validateSize(parentPrivateKey, PRIVATE_KEY_SIZE, 'parent private key');
-  
+
   // Create derivation data
   const indexBytes = new Uint8Array(4);
   new DataView(indexBytes.buffer).setUint32(0, index, false);
-  
+
   // Combine parent key and index
   const derivationData = new Uint8Array(parentPrivateKey.length + indexBytes.length);
   derivationData.set(parentPrivateKey);
   derivationData.set(indexBytes, parentPrivateKey.length);
-  
+
   // Derive child private key
   const childPrivateKey = await computeHash(derivationData);
   validateSize(childPrivateKey, PRIVATE_KEY_SIZE, 'child private key');
-  
+
   // Derive child public key
   const childPublicKey = await derivePublicKey(childPrivateKey);
-  
+
   return {
     privateKey: childPrivateKey,
     publicKey: childPublicKey
@@ -144,18 +147,18 @@ export async function generateHDWallet(masterSeed: Uint8Array, count: number): P
   if (count <= 0) {
     throw new Error('Count must be positive');
   }
-  
+
   // Generate master key pair
   const masterKeyPair = await generateKeyPairFromSeed(masterSeed);
-  
+
   // Generate child key pairs
   const keyPairs: KeyPair[] = [masterKeyPair];
-  
+
   for (let i = 1; i < count; i++) {
     const childKeyPair = await deriveChildKeyPair(masterKeyPair.privateKey, i);
     keyPairs.push(childKeyPair);
   }
-  
+
   return keyPairs;
 }
 
@@ -174,7 +177,7 @@ export async function deriveKeyPairFromPassword(
   const passwordBytes = new TextEncoder().encode(password);
   const privateKey = await deriveKey(passwordBytes, salt, iterations, PRIVATE_KEY_SIZE);
   const publicKey = await derivePublicKey(privateKey);
-  
+
   return {
     privateKey,
     publicKey
@@ -223,17 +226,17 @@ export function serializeKeyPair(keyPair: KeyPair): string {
 export function deserializeKeyPair(serialized: string): KeyPair {
   try {
     const data = JSON.parse(serialized);
-    
+
     if (!data.privateKey || !data.publicKey) {
       throw new Error('Missing key data');
     }
-    
+
     const privateKey = new Uint8Array(data.privateKey);
     const publicKey = new Uint8Array(data.publicKey);
-    
+
     validateSize(privateKey, PRIVATE_KEY_SIZE, 'private key');
     validateSize(publicKey, PUBLIC_KEY_SIZE, 'public key');
-    
+
     return { privateKey, publicKey };
   } catch (error) {
     throw new Error(`Failed to deserialize key pair: ${error}`);

@@ -1,6 +1,6 @@
 /**
  * Quick Start Example for TOPAY-Z512
- * 
+ *
  * This example demonstrates the basic usage of TOPAY-Z512 cryptographic library
  * including key generation, hashing, KEM operations, and data fragmentation.
  */
@@ -52,7 +52,7 @@ async function quickStartExample(): Promise<void> {
     console.log('\n4. Data fragmentation...');
     const largeData = new Uint8Array(1024);
     crypto.getRandomValues(largeData);
-    
+
     const fragResult = await fragmentData(largeData);
     console.log(`   Original size: ${fragResult.metadata.originalSize} bytes`);
     console.log(`   Fragment count: ${fragResult.metadata.fragmentCount}`);
@@ -67,7 +67,6 @@ async function quickStartExample(): Promise<void> {
     console.log('- Explore other examples in the examples/ directory');
     console.log('- Read the documentation for advanced features');
     console.log('- Check out the benchmark example for performance testing');
-
   } catch (error) {
     console.error('❌ Error in quick start example:', error);
     process.exit(1);

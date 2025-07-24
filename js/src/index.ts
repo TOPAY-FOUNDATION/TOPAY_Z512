@@ -1,36 +1,36 @@
 /**
  * TOPAY-Z512 Cryptographic Library
- * 
+ *
  * Quantum-safe cryptographic primitives for the TOPAY Foundation blockchain ecosystem.
- * 
+ *
  * TOPAY-Z512 offers post-quantum security with ≥512-bit classical security (~256-bit quantum resistance)
  * using lattice-based cryptography. It includes support for key generation, hashing, key encapsulation
  * mechanisms (KEM), and fragmented processing for parallel computation.
- * 
+ *
  * Key Features:
  * - Quantum-safe cryptographic operations
  * - High-performance implementations with batch operations
  * - Fragmented architecture for mobile and IoT device support
  * - Cross-platform compatibility
  * - Developer-friendly API design
- * 
+ *
  * @example
  * ```typescript
  * import { generateKeyPair, computeHash, kemKeyGen, kemEncapsulate, kemDecapsulate } from '@topayfoundation/topayz512';
- * 
+ *
  * // Generate a key pair
  * const keyPair = await generateKeyPair();
- * 
+ *
  * // Hash data
  * const data = new Uint8Array([1, 2, 3, 4, 5]);
  * const hash = await computeHash(data);
- * 
+ *
  * // KEM operations
  * const kemKeyPair = await kemKeyGen();
  * const { ciphertext, sharedSecret } = await kemEncapsulate(kemKeyPair.publicKey);
  * const decapsulatedSecret = await kemDecapsulate(kemKeyPair.secretKey, ciphertext);
  * ```
- * 
+ *
  * @packageDocumentation
  */
 
@@ -139,7 +139,10 @@ export interface ReconstructionResult {
  * Custom error types for TOPAY-Z512
  */
 export class TopayZ512Error extends Error {
-  constructor(message: string, public readonly code: string) {
+  constructor(
+    message: string,
+    public readonly code: string
+  ) {
     super(message);
     this.name = 'TopayZ512Error';
   }

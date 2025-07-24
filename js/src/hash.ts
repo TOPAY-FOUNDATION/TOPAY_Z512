@@ -3,13 +3,14 @@
  */
 
 import { createHash, createHmac } from 'crypto';
+import * as crypto from 'crypto';
 import { HASH_SIZE } from './index';
 import { Hash, EmptyDataError } from './index';
 import { validateSize, concatBytes, constantTimeEqual } from './utils';
 
 // Additional constants not exported from index
-const SALT_SIZE = 32;
-const HMAC_KEY_SIZE = 64;
+// const SALT_SIZE = 32;
+// const HMAC_KEY_SIZE = 64;
 
 // Hash cache for memoization of repeated operations
 const hashCache = new Map<string, Uint8Array>();
@@ -29,7 +30,10 @@ export function clearHashCache(): void {
  * @returns Promise resolving to hash
  * @throws EmptyDataError if data is empty
  */
-export async function computeHash(data: Uint8Array, useCache: boolean = data.length < 1024): Promise<Hash> {
+export async function computeHash(
+  data: Uint8Array,
+  useCache: boolean = data.length < 1024
+): Promise<Hash> {
   if (data.length === 0) {
     throw new EmptyDataError();
   }
@@ -42,12 +46,12 @@ export async function computeHash(data: Uint8Array, useCache: boolean = data.len
       const cached = hashCache.get(key)!;
       return new Uint8Array(cached);
     }
-    
+
     // Use SHA-512 as the base hash function for quantum resistance
     const hash = createHash('sha512');
     hash.update(data);
     const result = new Uint8Array(hash.digest());
-    
+
     // Manage cache size
     if (hashCache.size >= CACHE_MAX_SIZE) {
       const firstKey = hashCache.keys().next().value;
@@ -55,18 +59,18 @@ export async function computeHash(data: Uint8Array, useCache: boolean = data.len
         hashCache.delete(firstKey);
       }
     }
-    
+
     // Store a copy in cache to prevent corruption
     hashCache.set(key, new Uint8Array(result));
     validateSize(result, HASH_SIZE, 'hash');
     return result;
   }
-  
+
   // Use SHA-512 as the base hash function for quantum resistance
   const hash = createHash('sha512');
   hash.update(data);
   const result = new Uint8Array(hash.digest());
-  
+
   validateSize(result, HASH_SIZE, 'hash');
   return result;
 }
@@ -102,7 +106,7 @@ export async function computeHmac(key: Uint8Array, data: Uint8Array): Promise<Ha
   const hmac = createHmac('sha512', key);
   hmac.update(data);
   const result = new Uint8Array(hmac.digest());
-  
+
   validateSize(result, HASH_SIZE, 'hmac');
   return result;
 }
@@ -115,17 +119,17 @@ export async function computeHmac(key: Uint8Array, data: Uint8Array): Promise<Ha
  */
 export async function batchHash(dataItems: Uint8Array[], concurrency: number = 8): Promise<Hash[]> {
   if (dataItems.length === 0) return [];
-  
+
   // Process in chunks to avoid overwhelming the system
   const results: Hash[] = [];
-  
+
   for (let i = 0; i < dataItems.length; i += concurrency) {
     const chunk = dataItems.slice(i, i + concurrency);
     const chunkPromises = chunk.map(data => computeHash(data, data.length < 1024));
     const chunkResults = await Promise.all(chunkPromises);
     results.push(...chunkResults);
   }
-  
+
   return results;
 }
 
@@ -146,7 +150,7 @@ export async function computeMerkleRoot(dataItems: Uint8Array[]): Promise<Hash> 
   // Build Merkle tree bottom-up
   while (hashes.length > 1) {
     const nextLevel: Hash[] = [];
-    
+
     for (let i = 0; i < hashes.length; i += 2) {
       if (i + 1 < hashes.length) {
         // Pair exists, hash both
@@ -158,7 +162,7 @@ export async function computeMerkleRoot(dataItems: Uint8Array[]): Promise<Hash> 
         nextLevel.push(await computeHash(combined));
       }
     }
-    
+
     hashes = nextLevel;
   }
 
@@ -180,16 +184,23 @@ export async function deriveKey(
   keyLength: number = HASH_SIZE
 ): Promise<Uint8Array> {
   // Use Node.js crypto for PBKDF2
-  const crypto = require('crypto');
-  
+  // const crypto = require('crypto');
+
   return new Promise((resolve, reject) => {
-    crypto.pbkdf2(password, salt, iterations, keyLength, 'sha512', (err: Error | null, derivedKey: Buffer) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(new Uint8Array(derivedKey));
+    crypto.pbkdf2(
+      password,
+      salt,
+      iterations,
+      keyLength,
+      'sha512',
+      (err: Error | null, derivedKey: Buffer) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(new Uint8Array(derivedKey));
+        }
       }
-    });
+    );
   });
 }
 

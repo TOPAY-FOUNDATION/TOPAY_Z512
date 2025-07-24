@@ -1,7 +1,7 @@
 //! Error types for TOPAY-Z512
 
 #[cfg(not(feature = "std"))]
-use alloc::{string::String, format};
+use alloc::{format, string::String};
 
 use core::fmt;
 

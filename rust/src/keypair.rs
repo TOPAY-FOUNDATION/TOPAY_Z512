@@ -1,14 +1,14 @@
 //! Optimized key pair generation and management for TOPAY-Z512
-//! 
+//!
 //! This module provides high-performance key generation for demonstration purposes.
 //! In production, this would use cryptographically secure random number generation.
 
 #[cfg(not(feature = "std"))]
-use alloc::{vec::Vec, string::String};
+use alloc::{string::String, vec::Vec};
 
-use std::time::{SystemTime, UNIX_EPOCH};
-use crate::error::{TopayzError, Result};
+use crate::error::{Result, TopayzError};
 use crate::{PRIVATE_KEY_SIZE, PUBLIC_KEY_SIZE};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// A private key for TOPAY-Z512 with optimized layout
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -35,7 +35,7 @@ impl OptimizedRng {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos() as u64;
-        
+
         // Initialize with better entropy using multiple sources
         let state = [
             now,
@@ -43,7 +43,7 @@ impl OptimizedRng {
             now.wrapping_mul(0xBF58476D1CE4E5B9),
             now.wrapping_mul(0x94D049BB133111EB),
         ];
-        
+
         Self { state }
     }
 
@@ -55,7 +55,7 @@ impl OptimizedRng {
             let random_u64 = self.next_u64();
             let remaining = bytes.len() - i;
             let to_copy = core::cmp::min(8, remaining);
-            
+
             // Copy bytes efficiently
             let random_bytes = random_u64.to_le_bytes();
             bytes[i..i + to_copy].copy_from_slice(&random_bytes[..to_copy]);
@@ -121,9 +121,9 @@ impl PrivateKey {
         if hex.len() != PRIVATE_KEY_SIZE * 2 {
             return Err(TopayzError::InvalidInput("Invalid hex length".to_string()));
         }
-        
+
         let mut bytes = [0u8; PRIVATE_KEY_SIZE];
-        
+
         // Optimized hex parsing
         for i in 0..PRIVATE_KEY_SIZE {
             let hex_byte = &hex[i * 2..i * 2 + 2];
@@ -147,22 +147,22 @@ impl PrivateKey {
     pub fn public_key(&self) -> PublicKey {
         // Optimized public key derivation using better mixing
         let mut public_bytes = [0u8; PUBLIC_KEY_SIZE];
-        
+
         // Use a more sophisticated derivation function
         for i in 0..PUBLIC_KEY_SIZE {
             let private_idx = i % PRIVATE_KEY_SIZE;
             let base = self.bytes[private_idx];
-            
+
             // Better mixing function for public key derivation
             let mixed = base
                 .wrapping_mul(0x9E)
                 .wrapping_add(0x37)
                 .wrapping_mul(i as u8)
                 .wrapping_add(0x5A);
-            
+
             public_bytes[i] = mixed;
         }
-        
+
         PublicKey::from_bytes(public_bytes)
     }
 
@@ -170,13 +170,13 @@ impl PrivateKey {
     pub fn batch_generate(count: usize) -> Vec<Self> {
         let mut keys = Vec::with_capacity(count);
         let mut rng = OptimizedRng::new();
-        
+
         for _ in 0..count {
             let mut bytes = [0u8; PRIVATE_KEY_SIZE];
             rng.fill_bytes(&mut bytes);
             keys.push(Self { bytes });
         }
-        
+
         keys
     }
 
@@ -216,9 +216,9 @@ impl PublicKey {
         if hex.len() != PUBLIC_KEY_SIZE * 2 {
             return Err(TopayzError::InvalidInput("Invalid hex length".to_string()));
         }
-        
+
         let mut bytes = [0u8; PUBLIC_KEY_SIZE];
-        
+
         // Optimized hex parsing
         for i in 0..PUBLIC_KEY_SIZE {
             let hex_byte = &hex[i * 2..i * 2 + 2];
@@ -257,7 +257,10 @@ impl KeyPair {
     pub fn generate() -> Self {
         let private_key = PrivateKey::generate();
         let public_key = private_key.public_key();
-        Self { private_key, public_key }
+        Self {
+            private_key,
+            public_key,
+        }
     }
 
     /// Create a key pair from a private key
@@ -291,17 +294,20 @@ impl KeyPair {
     pub fn batch_generate(count: usize) -> Vec<Self> {
         let mut keypairs = Vec::with_capacity(count);
         let mut rng = OptimizedRng::new();
-        
+
         for _ in 0..count {
             let mut private_bytes = [0u8; PRIVATE_KEY_SIZE];
             rng.fill_bytes(&mut private_bytes);
-            
+
             let private_key = PrivateKey::from_bytes(private_bytes);
             let public_key = private_key.public_key();
-            
-            keypairs.push(Self { private_key, public_key });
+
+            keypairs.push(Self {
+                private_key,
+                public_key,
+            });
         }
-        
+
         keypairs
     }
 
@@ -374,7 +380,7 @@ mod tests {
         let private_key = PrivateKey::generate();
         let public_key1 = private_key.public_key();
         let public_key2 = private_key.public_key();
-        
+
         // Should be deterministic
         assert_eq!(public_key1, public_key2);
     }
@@ -382,13 +388,13 @@ mod tests {
     #[test]
     fn test_hex_conversion() {
         let keypair = KeyPair::generate();
-        
+
         let private_hex = keypair.private_key().to_hex();
         let public_hex = keypair.public_key().to_hex();
-        
+
         let private_key2 = PrivateKey::from_hex(&private_hex).unwrap();
         let public_key2 = PublicKey::from_hex(&public_hex).unwrap();
-        
+
         assert_eq!(keypair.private_key(), &private_key2);
         assert_eq!(keypair.public_key(), &public_key2);
     }
@@ -397,7 +403,7 @@ mod tests {
     fn test_keypair_from_private() {
         let private_key = PrivateKey::generate();
         let keypair = KeyPair::from_private_key(private_key.clone());
-        
+
         assert_eq!(keypair.private_key(), &private_key);
         assert_eq!(keypair.public_key(), &private_key.public_key());
     }
@@ -408,7 +414,7 @@ mod tests {
         let private_bytes = [0u8; PRIVATE_KEY_SIZE];
         let private_key = PrivateKey::from_bytes(private_bytes);
         let public_key = private_key.public_key();
-        
+
         // Should always produce the same public key for the same private key
         let public_key2 = private_key.public_key();
         assert_eq!(public_key, public_key2);
@@ -418,7 +424,7 @@ mod tests {
     fn test_invalid_hex() {
         let result = PrivateKey::from_hex("invalid_hex");
         assert!(result.is_err());
-        
+
         let result = PublicKey::from_hex("deadbeef"); // Too short
         assert!(result.is_err());
     }
@@ -427,10 +433,10 @@ mod tests {
     fn test_batch_generation() {
         let private_keys = PrivateKey::batch_generate(10);
         assert_eq!(private_keys.len(), 10);
-        
+
         let keypairs = KeyPair::batch_generate(5);
         assert_eq!(keypairs.len(), 5);
-        
+
         for keypair in keypairs {
             assert!(keypair.verify());
         }
@@ -440,7 +446,7 @@ mod tests {
     fn test_key_verification() {
         let keypair = KeyPair::generate();
         assert!(keypair.verify());
-        
+
         let private_key = PrivateKey::generate();
         let public_key = private_key.public_key();
         assert!(public_key.verify_derivation(&private_key));
@@ -450,10 +456,10 @@ mod tests {
     fn test_equality_methods() {
         let keypair1 = KeyPair::generate();
         let keypair2 = KeyPair::generate();
-        
+
         assert!(keypair1.private_key().equals(keypair1.private_key()));
         assert!(keypair1.public_key().equals(keypair1.public_key()));
-        
+
         assert!(!keypair1.private_key().equals(keypair2.private_key()));
         assert!(!keypair1.public_key().equals(keypair2.public_key()));
     }

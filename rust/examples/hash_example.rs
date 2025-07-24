@@ -1,5 +1,5 @@
 //! Hash example for TOPAY-Z512
-//! 
+//!
 //! This example demonstrates the hash functionality of the TOPAY-Z512 library.
 
 use topayz512::{Hash, Result};
@@ -26,7 +26,11 @@ fn main() -> Result<()> {
 
     for (i, input) in inputs.iter().enumerate() {
         let hash = Hash::new(input);
-        println!("   Input {}: {:?}", i + 1, std::str::from_utf8(input).unwrap_or("<binary>"));
+        println!(
+            "   Input {}: {:?}",
+            i + 1,
+            std::str::from_utf8(input).unwrap_or("<binary>")
+        );
         println!("   Hash:    {}", hash.to_hex());
     }
     println!();
@@ -46,11 +50,11 @@ fn main() -> Result<()> {
     let hash_a = Hash::new(b"apple");
     let hash_b = Hash::new(b"banana");
     let hash_c = Hash::new(b"cherry");
-    
+
     println!("   Hash A: {}", hash_a.to_hex());
     println!("   Hash B: {}", hash_b.to_hex());
     println!("   Hash C: {}", hash_c.to_hex());
-    
+
     let concatenated = Hash::concat(&[&hash_a, &hash_b, &hash_c]);
     println!("   Concatenated: {}", concatenated.to_hex());
     println!();
@@ -60,7 +64,7 @@ fn main() -> Result<()> {
     let original_hash = Hash::new(b"test data for hex conversion");
     let hex_string = original_hash.to_hex();
     let restored_hash = Hash::from_hex(&hex_string)?;
-    
+
     println!("   Original:  {}", original_hash.to_hex());
     println!("   Hex:       {}", hex_string);
     println!("   Restored:  {}", restored_hash.to_hex());

@@ -40,26 +40,26 @@ async function runIndividualTests(): Promise<void> {
 
   for (let i = 0; i < testCategories.length; i++) {
     const category = testCategories[i]!;
-    
+
     console.log(`\n${'='.repeat(60)}`);
     console.log(`📋 Test Category ${i + 1}/${testCategories.length}: ${category.name}`);
     console.log(`${'='.repeat(60)}`);
 
     const runner = new TestRunner();
-    
+
     try {
       await category.fn(runner);
       const summary = runner.getSummary();
       overallPassed += summary.totalPassed;
       overallFailed += summary.totalFailed;
       overallDuration += summary.totalDuration;
-      
+
       console.log(`\n✅ ${category.name} completed successfully!`);
     } catch (error) {
       console.log(`\n❌ ${category.name} failed: ${error}`);
       overallFailed++;
     }
-    
+
     // Small delay between categories
     await new Promise(resolve => setTimeout(resolve, 100));
   }
@@ -71,7 +71,9 @@ async function runIndividualTests(): Promise<void> {
   console.log(`Total Tests: ${overallPassed + overallFailed}`);
   console.log(`Passed: ${overallPassed}`);
   console.log(`Failed: ${overallFailed}`);
-  console.log(`Success Rate: ${((overallPassed / (overallPassed + overallFailed)) * 100).toFixed(1)}%`);
+  console.log(
+    `Success Rate: ${((overallPassed / (overallPassed + overallFailed)) * 100).toFixed(1)}%`
+  );
   console.log(`Total Duration: ${overallDuration}ms`);
 
   if (overallFailed > 0) {

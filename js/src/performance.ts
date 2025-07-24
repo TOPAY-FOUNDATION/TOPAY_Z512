@@ -39,16 +39,19 @@ export interface BenchmarkResults {
  * @param dataSize - Size of data to hash in bytes
  * @returns Promise resolving to performance metrics
  */
-export async function benchmarkHash(iterations: number = 1000, dataSize: number = 1024): Promise<PerformanceMetrics> {
+export async function benchmarkHash(
+  iterations: number = 1000,
+  dataSize: number = 1024
+): Promise<PerformanceMetrics> {
   const testData = new Uint8Array(dataSize);
   crypto.getRandomValues(testData);
-  
-  const { result, timeMs } = await measureTime(async () => {
+
+  const { /* result, */ timeMs } = await measureTime(async () => {
     for (let i = 0; i < iterations; i++) {
       await computeHash(testData);
     }
   });
-  
+
   return {
     operation: 'Hash',
     executionTimeMs: timeMs,
@@ -61,13 +64,15 @@ export async function benchmarkHash(iterations: number = 1000, dataSize: number 
  * @param iterations - Number of key pairs to generate
  * @returns Promise resolving to performance metrics
  */
-export async function benchmarkKeyPairGeneration(iterations: number = 100): Promise<PerformanceMetrics> {
-  const { result, timeMs } = await measureTime(async () => {
+export async function benchmarkKeyPairGeneration(
+  iterations: number = 100
+): Promise<PerformanceMetrics> {
+  const { /* result, */ timeMs } = await measureTime(async () => {
     for (let i = 0; i < iterations; i++) {
       await generateKeyPair();
     }
   });
-  
+
   return {
     operation: 'KeyPair Generation',
     executionTimeMs: timeMs,
@@ -81,14 +86,14 @@ export async function benchmarkKeyPairGeneration(iterations: number = 100): Prom
  * @returns Promise resolving to performance metrics
  */
 export async function benchmarkKEM(iterations: number = 100): Promise<PerformanceMetrics> {
-  const { result, timeMs } = await measureTime(async () => {
+  const { /* result, */ timeMs } = await measureTime(async () => {
     for (let i = 0; i < iterations; i++) {
       const keyPair = await kemKeyGen();
-      const { ciphertext, sharedSecret } = await kemEncapsulate(keyPair.publicKey);
+      const { ciphertext /* , sharedSecret */ } = await kemEncapsulate(keyPair.publicKey);
       await kemDecapsulate(keyPair.secretKey, ciphertext);
     }
   });
-  
+
   return {
     operation: 'KEM Operations',
     executionTimeMs: timeMs,
@@ -108,14 +113,14 @@ export async function benchmarkFragmentation(
 ): Promise<PerformanceMetrics> {
   const testData = new Uint8Array(dataSize);
   crypto.getRandomValues(testData);
-  
-  const { result, timeMs } = await measureTime(async () => {
+
+  const { /* result, */ timeMs } = await measureTime(async () => {
     for (let i = 0; i < iterations; i++) {
       const fragResult = await fragmentData(testData);
       await reconstructData(fragResult.fragments);
     }
   });
-  
+
   return {
     operation: 'Fragmentation',
     executionTimeMs: timeMs,
@@ -128,13 +133,15 @@ export async function benchmarkFragmentation(
  * @param config - Benchmark configuration
  * @returns Promise resolving to complete benchmark results
  */
-export async function runBenchmarkSuite(config: {
-  hashIterations?: number;
-  keyPairIterations?: number;
-  kemIterations?: number;
-  fragmentationIterations?: number;
-  dataSize?: number;
-} = {}): Promise<BenchmarkResults> {
+export async function runBenchmarkSuite(
+  config: {
+    hashIterations?: number;
+    keyPairIterations?: number;
+    kemIterations?: number;
+    fragmentationIterations?: number;
+    dataSize?: number;
+  } = {}
+): Promise<BenchmarkResults> {
   const {
     hashIterations = 1000,
     keyPairIterations = 100,
@@ -142,31 +149,36 @@ export async function runBenchmarkSuite(config: {
     fragmentationIterations = 50,
     dataSize = 1024
   } = config;
-  
+
   console.log('Starting TOPAY-Z512 benchmark suite...');
-  
+
   const systemInfo = getSystemCapabilities();
   const startTime = Date.now();
-  
+
   // Run individual benchmarks
   const hashMetrics = await benchmarkHash(hashIterations, dataSize);
   console.log(`Hash benchmark completed: ${hashMetrics.throughputOpsPerSec?.toFixed(2)} ops/sec`);
-  
+
   const keyPairMetrics = await benchmarkKeyPairGeneration(keyPairIterations);
-  console.log(`KeyPair benchmark completed: ${keyPairMetrics.throughputOpsPerSec?.toFixed(2)} ops/sec`);
-  
+  console.log(
+    `KeyPair benchmark completed: ${keyPairMetrics.throughputOpsPerSec?.toFixed(2)} ops/sec`
+  );
+
   const kemMetrics = await benchmarkKEM(kemIterations);
   console.log(`KEM benchmark completed: ${kemMetrics.throughputOpsPerSec?.toFixed(2)} ops/sec`);
-  
+
   const fragmentationMetrics = await benchmarkFragmentation(fragmentationIterations, dataSize * 10);
-  console.log(`Fragmentation benchmark completed: ${fragmentationMetrics.throughputOpsPerSec?.toFixed(2)} ops/sec`);
-  
+  console.log(
+    `Fragmentation benchmark completed: ${fragmentationMetrics.throughputOpsPerSec?.toFixed(2)} ops/sec`
+  );
+
   const metrics = [hashMetrics, keyPairMetrics, kemMetrics, fragmentationMetrics];
   const totalTimeMs = Date.now() - startTime;
   const averageTimeMs = totalTimeMs / metrics.length;
-  const totalOperations = hashIterations + keyPairIterations + kemIterations + fragmentationIterations;
+  const totalOperations =
+    hashIterations + keyPairIterations + kemIterations + fragmentationIterations;
   const operationsPerSecond = totalOperations / (totalTimeMs / 1000);
-  
+
   return {
     systemInfo,
     timestamp: startTime,
@@ -196,19 +208,19 @@ export async function monitorMemoryUsage<T>(operation: () => Promise<T>): Promis
   // Get initial memory usage
   const initialMemory = typeof process !== 'undefined' ? process.memoryUsage() : { heapUsed: 0 };
   const beforeMB = initialMemory.heapUsed / 1024 / 1024;
-  
+
   // Run operation
   const result = await operation();
-  
+
   // Force garbage collection if available
   if (typeof global !== 'undefined' && global.gc) {
     global.gc();
   }
-  
+
   // Get final memory usage
   const finalMemory = typeof process !== 'undefined' ? process.memoryUsage() : { heapUsed: 0 };
   const afterMB = finalMemory.heapUsed / 1024 / 1024;
-  
+
   return {
     result,
     memoryMetrics: {
@@ -239,7 +251,7 @@ export async function profileCPUUsage<T>(
 }> {
   const samples: number[] = [];
   let isRunning = true;
-  
+
   // Start CPU monitoring (simplified for cross-platform compatibility)
   const monitor = setInterval(() => {
     if (isRunning) {
@@ -248,15 +260,15 @@ export async function profileCPUUsage<T>(
       samples.push(usage);
     }
   }, sampleIntervalMs);
-  
+
   try {
     const result = await operation();
     isRunning = false;
     clearInterval(monitor);
-    
+
     const averageUsagePercent = samples.reduce((sum, sample) => sum + sample, 0) / samples.length;
     const peakUsagePercent = Math.max(...samples);
-    
+
     return {
       result,
       cpuMetrics: {
@@ -280,7 +292,7 @@ export async function profileCPUUsage<T>(
 export function estimateMobilePerformance(metrics: PerformanceMetrics): PerformanceMetrics {
   // Mobile devices typically have 2-4x slower performance
   const mobileSlowdownFactor = 3;
-  
+
   return {
     ...metrics,
     operation: `${metrics.operation} (Mobile Estimate)`,
@@ -309,7 +321,7 @@ export function generatePerformanceReport(results: BenchmarkResults): string {
     'Benchmark Results:',
     '-'.repeat(40)
   ];
-  
+
   results.metrics.forEach(metric => {
     report.push(`${metric.operation}:`);
     report.push(`  Execution Time: ${metric.executionTimeMs.toFixed(2)} ms`);
@@ -321,13 +333,13 @@ export function generatePerformanceReport(results: BenchmarkResults): string {
     }
     report.push('');
   });
-  
+
   report.push('Summary:');
   report.push(`  Total Time: ${results.summary.totalTimeMs.toFixed(2)} ms`);
   report.push(`  Average Time: ${results.summary.averageTimeMs.toFixed(2)} ms`);
   report.push(`  Overall Throughput: ${results.summary.operationsPerSecond.toFixed(2)} ops/sec`);
   report.push('');
   report.push('='.repeat(60));
-  
+
   return report.join('\n');
 }

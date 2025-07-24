@@ -1,6 +1,6 @@
 /**
  * Interactive Guide Example for TOPAY-Z512
- * 
+ *
  * This example provides an interactive command-line interface to explore
  * all TOPAY-Z512 features with guided tutorials and real-time feedback.
  */
@@ -68,7 +68,7 @@ class InteractiveGuide {
     console.log('7. 🚪 Exit');
 
     const choice = await this.prompt('\nSelect an option (1-7): ');
-    
+
     switch (choice.trim()) {
       case '1':
         await this.keyPairMenu();
@@ -141,14 +141,16 @@ class InteractiveGuide {
 
   private async generateKeyPair(): Promise<void> {
     console.log('\n🔄 Generating new key pair...');
-    
+
     const { timeMs, result: keyPair } = await measureTime(async () => {
       return await generateKeyPair();
     });
 
     this.session.currentKeyPair = keyPair;
-    this.session.sessionData.set('keyPairsGenerated', 
-      (this.session.sessionData.get('keyPairsGenerated') || 0) + 1);
+    this.session.sessionData.set(
+      'keyPairsGenerated',
+      (this.session.sessionData.get('keyPairsGenerated') || 0) + 1
+    );
 
     console.log(`✅ Key pair generated in ${timeMs.toFixed(3)}ms`);
     console.log(`   Private key: ${toHex(keyPair.privateKey).substring(0, 32)}...`);
@@ -157,7 +159,7 @@ class InteractiveGuide {
 
   private async generateKeyPairFromSeed(): Promise<void> {
     const seedInput = await this.prompt('\nEnter seed (hex) or press Enter for random: ');
-    
+
     let seed: Uint8Array;
     if (seedInput.trim()) {
       try {
@@ -171,13 +173,13 @@ class InteractiveGuide {
     }
 
     console.log(`🌱 Using seed: ${toHex(seed).substring(0, 32)}...`);
-    
+
     const { timeMs, result: keyPair } = await measureTime(async () => {
       return await generateKeyPairFromSeed(seed);
     });
 
     this.session.currentKeyPair = keyPair;
-    
+
     console.log(`✅ Deterministic key pair generated in ${timeMs.toFixed(3)}ms`);
     console.log(`   Private key: ${toHex(keyPair.privateKey).substring(0, 32)}...`);
     console.log(`   Public key:  ${toHex(keyPair.publicKey).substring(0, 32)}...`);
@@ -193,7 +195,7 @@ class InteractiveGuide {
     const index = parseInt(indexInput.trim()) || 0;
 
     console.log(`🌿 Deriving child key pair at index ${index}...`);
-    
+
     const { timeMs, result: childKeyPair } = await measureTime(async () => {
       return await deriveChildKeyPair(this.session.currentKeyPair.privateKey, index);
     });
@@ -216,7 +218,7 @@ class InteractiveGuide {
     }
 
     console.log('\n🔍 Validating current key pair...');
-    
+
     const { timeMs, result: isValid } = await measureTime(async () => {
       return await validateKeyPair(this.session.currentKeyPair);
     });
@@ -232,7 +234,7 @@ class InteractiveGuide {
     }
 
     console.log('\n📦 Serializing key pair...');
-    
+
     const serialized = serializeKeyPair(this.session.currentKeyPair);
     console.log(`✅ Serialized length: ${serialized.length} characters`);
     console.log(`   Serialized data: ${serialized.substring(0, 64)}...`);
@@ -240,7 +242,8 @@ class InteractiveGuide {
     const testRoundTrip = await this.prompt('\nTest round-trip serialization? (y/n): ');
     if (testRoundTrip.toLowerCase() === 'y') {
       const deserialized = deserializeKeyPair(serialized);
-      const matches = toHex(this.session.currentKeyPair.privateKey) === toHex(deserialized.privateKey);
+      const matches =
+        toHex(this.session.currentKeyPair.privateKey) === toHex(deserialized.privateKey);
       console.log(`${matches ? '✅' : '❌'} Round-trip test: ${matches ? 'SUCCESS' : 'FAILED'}`);
     }
   }
@@ -296,7 +299,7 @@ class InteractiveGuide {
     const data = new TextEncoder().encode(text);
 
     console.log(`\n📝 Hashing "${text}"...`);
-    
+
     const { timeMs, result: hash } = await measureTime(async () => {
       return await computeHash(data);
     });
@@ -305,8 +308,10 @@ class InteractiveGuide {
     console.log(`   Input size: ${data.length} bytes`);
     console.log(`   Hash: ${toHex(hash)}`);
 
-    this.session.sessionData.set('hashesComputed', 
-      (this.session.sessionData.get('hashesComputed') || 0) + 1);
+    this.session.sessionData.set(
+      'hashesComputed',
+      (this.session.sessionData.get('hashesComputed') || 0) + 1
+    );
   }
 
   private async hashRandomData(): Promise<void> {
@@ -317,7 +322,7 @@ class InteractiveGuide {
     crypto.getRandomValues(data);
 
     console.log(`\n🎲 Hashing ${size} bytes of random data...`);
-    
+
     const { timeMs, result: hash } = await measureTime(async () => {
       return await computeHash(data);
     });
@@ -329,7 +334,7 @@ class InteractiveGuide {
 
   private async hashFileSimulation(): Promise<void> {
     const sizes = [1024, 10240, 102400, 1048576]; // 1KB, 10KB, 100KB, 1MB
-    
+
     console.log('\n📁 File Hash Simulation');
     console.log('-'.repeat(25));
     console.log('Size      | Time (ms) | Throughput (MB/s)');
@@ -343,12 +348,17 @@ class InteractiveGuide {
         return await computeHash(data);
       });
 
-      const throughput = (size / (timeMs / 1000) / 1024 / 1024);
-      const sizeStr = size < 1024 ? `${size}B` : 
-                     size < 1048576 ? `${(size / 1024).toFixed(0)}KB` : 
-                     `${(size / 1048576).toFixed(1)}MB`;
+      const throughput = size / (timeMs / 1000) / 1024 / 1024;
+      const sizeStr =
+        size < 1024
+          ? `${size}B`
+          : size < 1048576
+            ? `${(size / 1024).toFixed(0)}KB`
+            : `${(size / 1048576).toFixed(1)}MB`;
 
-      console.log(`${sizeStr.padEnd(9)} | ${timeMs.toFixed(3).padStart(9)} | ${throughput.toFixed(2).padStart(16)}`);
+      console.log(
+        `${sizeStr.padEnd(9)} | ${timeMs.toFixed(3).padStart(9)} | ${throughput.toFixed(2).padStart(16)}`
+      );
     }
   }
 
@@ -357,8 +367,10 @@ class InteractiveGuide {
     console.log('-'.repeat(30));
 
     const benchmark = await benchmarkHash();
-    
-    console.log(`Operations per second: ${benchmark.throughputOpsPerSec?.toLocaleString() || 'N/A'}`);
+
+    console.log(
+      `Operations per second: ${benchmark.throughputOpsPerSec?.toLocaleString() || 'N/A'}`
+    );
     console.log(`Execution time: ${benchmark.executionTimeMs.toFixed(3)}ms`);
     console.log(`Operation: ${benchmark.operation}`);
   }
@@ -403,13 +415,13 @@ class InteractiveGuide {
 
   private async generateKEMKeyPair(): Promise<void> {
     console.log('\n🔄 Generating KEM key pair...');
-    
+
     const { timeMs, result: kemKeyPair } = await measureTime(async () => {
       return await kemKeyGen();
     });
 
     this.session.currentKEMKeyPair = kemKeyPair;
-    
+
     console.log(`✅ KEM key pair generated in ${timeMs.toFixed(3)}ms`);
     console.log(`   Secret key: ${toHex(kemKeyPair.secretKey).substring(0, 32)}...`);
     console.log(`   Public key: ${toHex(kemKeyPair.publicKey).substring(0, 32)}...`);
@@ -422,7 +434,7 @@ class InteractiveGuide {
     }
 
     console.log('\n🔐 Encapsulating shared secret...');
-    
+
     const { timeMs, result } = await measureTime(async () => {
       return await kemEncapsulate(this.session.currentKEMKeyPair.publicKey);
     });
@@ -448,7 +460,7 @@ class InteractiveGuide {
     }
 
     console.log('\n🔓 Decapsulating shared secret...');
-    
+
     const { timeMs, result: sharedSecret } = await measureTime(async () => {
       return await kemDecapsulate(this.session.currentKEMKeyPair.secretKey, ciphertext);
     });
@@ -489,7 +501,9 @@ class InteractiveGuide {
     // Verify
     const secretsMatch = toHex(encapResult.sharedSecret) === toHex(decapSecret);
     console.log(`4. Verifying shared secrets...`);
-    console.log(`   ${secretsMatch ? '✅' : '❌'} Verification: ${secretsMatch ? 'SUCCESS' : 'FAILED'}`);
+    console.log(
+      `   ${secretsMatch ? '✅' : '❌'} Verification: ${secretsMatch ? 'SUCCESS' : 'FAILED'}`
+    );
 
     const totalTime = keyGenTime + encapTime + decapTime;
     console.log(`\n📊 Total cycle time: ${totalTime.toFixed(3)}ms`);
@@ -550,7 +564,7 @@ class InteractiveGuide {
     const data = new TextEncoder().encode(text);
 
     console.log(`\n✂️ Fragmenting "${text}"...`);
-    
+
     const { timeMs, result } = await measureTime(async () => {
       return await fragmentData(data);
     });
@@ -571,7 +585,7 @@ class InteractiveGuide {
     crypto.getRandomValues(data);
 
     console.log(`\n✂️ Fragmenting ${size} bytes of random data...`);
-    
+
     const { timeMs, result } = await measureTime(async () => {
       return await fragmentData(data);
     });
@@ -590,7 +604,7 @@ class InteractiveGuide {
     }
 
     console.log(`\n🔧 Reconstructing ${this.session.currentFragments.length} fragments...`);
-    
+
     const { timeMs, result } = await measureTime(async () => {
       return await reconstructData(this.session.currentFragments!);
     });
@@ -598,7 +612,7 @@ class InteractiveGuide {
     console.log(`✅ Reconstruction completed in ${timeMs.toFixed(3)}ms`);
     console.log(`   Reconstruction complete: ${result.isComplete}`);
     console.log(`   Reconstructed size: ${result.data.length} bytes`);
-    
+
     if (result.data.length < 200) {
       const text = new TextDecoder().decode(result.data);
       console.log(`   Reconstructed text: "${text}"`);
@@ -639,12 +653,12 @@ class InteractiveGuide {
     console.log('\n🧩 Current Fragments');
     console.log('-'.repeat(20));
     console.log(`Fragment count: ${this.session.currentFragments.length}`);
-    
+
     for (let i = 0; i < Math.min(5, this.session.currentFragments.length); i++) {
       const fragment = this.session.currentFragments[i]!;
       console.log(`   Fragment ${fragment.index}: ${fragment.data.length} bytes`);
     }
-    
+
     if (this.session.currentFragments.length > 5) {
       console.log(`   ... and ${this.session.currentFragments.length - 5} more fragments`);
     }
@@ -690,28 +704,30 @@ class InteractiveGuide {
 
   private async runHashBenchmark(): Promise<void> {
     console.log('\n⚡ Running hash operations benchmark...');
-    
+
     const benchmark = await benchmarkHash();
-    
+
     console.log('✅ Hash Benchmark Results:');
-    console.log(`   Operations per second: ${benchmark.throughputOpsPerSec?.toLocaleString() || 'N/A'}`);
+    console.log(
+      `   Operations per second: ${benchmark.throughputOpsPerSec?.toLocaleString() || 'N/A'}`
+    );
     console.log(`   Execution time: ${benchmark.executionTimeMs.toFixed(3)}ms`);
     console.log(`   Operation: ${benchmark.operation}`);
   }
 
   private async runKeyPairBenchmark(): Promise<void> {
     console.log('\n⚡ Running key pair generation benchmark...');
-    
+
     const startTime = Date.now();
     const keyPairs = [];
-    
+
     for (let i = 0; i < 10; i++) {
       keyPairs.push(await generateKeyPair());
     }
-    
+
     const endTime = Date.now();
     const totalTime = endTime - startTime;
-    
+
     console.log('✅ Key Pair Benchmark Results:');
     console.log(`   Generated ${keyPairs.length} key pairs`);
     console.log(`   Total time: ${totalTime}ms`);
@@ -721,20 +737,20 @@ class InteractiveGuide {
 
   private async runKEMBenchmark(): Promise<void> {
     console.log('\n⚡ Running KEM operations benchmark...');
-    
+
     const kemKeyPair = await kemKeyGen();
     const operations = 10;
-    
+
     const startTime = Date.now();
-    
+
     for (let i = 0; i < operations; i++) {
       const { ciphertext, sharedSecret } = await kemEncapsulate(kemKeyPair.publicKey);
       await kemDecapsulate(kemKeyPair.secretKey, ciphertext);
     }
-    
+
     const endTime = Date.now();
     const totalTime = endTime - startTime;
-    
+
     console.log('✅ KEM Benchmark Results:');
     console.log(`   Completed ${operations} full KEM cycles`);
     console.log(`   Total time: ${totalTime}ms`);
@@ -744,40 +760,42 @@ class InteractiveGuide {
 
   private async runFragmentationBenchmark(): Promise<void> {
     console.log('\n⚡ Running fragmentation benchmark...');
-    
+
     const testData = new Uint8Array(4096);
     crypto.getRandomValues(testData);
     const operations = 10;
-    
+
     const startTime = Date.now();
-    
+
     for (let i = 0; i < operations; i++) {
       const fragResult = await fragmentData(testData);
       await reconstructData(fragResult.fragments);
     }
-    
+
     const endTime = Date.now();
     const totalTime = endTime - startTime;
-    
+
     console.log('✅ Fragmentation Benchmark Results:');
     console.log(`   Completed ${operations} fragmentation cycles`);
     console.log(`   Data size: ${testData.length} bytes per operation`);
     console.log(`   Total time: ${totalTime}ms`);
     console.log(`   Average time per cycle: ${(totalTime / operations).toFixed(3)}ms`);
-    console.log(`   Throughput: ${(testData.length * operations / (totalTime / 1000) / 1024 / 1024).toFixed(2)} MB/s`);
+    console.log(
+      `   Throughput: ${((testData.length * operations) / (totalTime / 1000) / 1024 / 1024).toFixed(2)} MB/s`
+    );
   }
 
   private async runCustomBenchmark(): Promise<void> {
     console.log('\n🎯 Custom Benchmark Configuration');
     console.log('-'.repeat(35));
-    
+
     const operation = await this.prompt('Select operation (hash/keygen/kem/fragment): ');
     const iterations = parseInt(await this.prompt('Number of iterations (default 100): ')) || 100;
-    
+
     console.log(`\n⚡ Running custom benchmark: ${operation} x${iterations}...`);
-    
+
     const startTime = Date.now();
-    
+
     switch (operation.toLowerCase()) {
       case 'hash':
         const data = new Uint8Array(1024);
@@ -786,13 +804,13 @@ class InteractiveGuide {
           await computeHash(data);
         }
         break;
-        
+
       case 'keygen':
         for (let i = 0; i < iterations; i++) {
           await generateKeyPair();
         }
         break;
-        
+
       case 'kem':
         const kemKeyPair = await kemKeyGen();
         for (let i = 0; i < iterations; i++) {
@@ -800,7 +818,7 @@ class InteractiveGuide {
           await kemDecapsulate(kemKeyPair.secretKey, ciphertext);
         }
         break;
-        
+
       case 'fragment':
         const fragData = new Uint8Array(2048);
         for (let i = 0; i < iterations; i++) {
@@ -809,15 +827,15 @@ class InteractiveGuide {
           await reconstructData(fragResult.fragments);
         }
         break;
-        
+
       default:
         console.log('❌ Unknown operation. Skipping benchmark.');
         return;
     }
-    
+
     const endTime = Date.now();
     const totalTime = endTime - startTime;
-    
+
     console.log('✅ Custom Benchmark Results:');
     console.log(`   Operation: ${operation}`);
     console.log(`   Iterations: ${iterations.toLocaleString()}`);
@@ -829,20 +847,26 @@ class InteractiveGuide {
   private async showSessionSummary(): Promise<void> {
     console.log('\n📊 Session Summary');
     console.log('-'.repeat(20));
-    
+
     const keyPairsGenerated = this.session.sessionData.get('keyPairsGenerated') || 0;
     const hashesComputed = this.session.sessionData.get('hashesComputed') || 0;
-    
+
     console.log(`Key pairs generated: ${keyPairsGenerated}`);
     console.log(`Hashes computed: ${hashesComputed}`);
     console.log(`Current key pair: ${this.session.currentKeyPair ? 'Yes' : 'No'}`);
     console.log(`Current KEM key pair: ${this.session.currentKEMKeyPair ? 'Yes' : 'No'}`);
-    console.log(`Current fragments: ${this.session.currentFragments ? this.session.currentFragments.length : 0}`);
-    
+    console.log(
+      `Current fragments: ${this.session.currentFragments ? this.session.currentFragments.length : 0}`
+    );
+
     if (this.session.currentKeyPair) {
       console.log(`\nCurrent key pair details:`);
-      console.log(`   Private: ${toHex(this.session.currentKeyPair.privateKey).substring(0, 32)}...`);
-      console.log(`   Public:  ${toHex(this.session.currentKeyPair.publicKey).substring(0, 32)}...`);
+      console.log(
+        `   Private: ${toHex(this.session.currentKeyPair.privateKey).substring(0, 32)}...`
+      );
+      console.log(
+        `   Public:  ${toHex(this.session.currentKeyPair.publicKey).substring(0, 32)}...`
+      );
     }
 
     await this.prompt('\nPress Enter to continue...');
@@ -856,7 +880,7 @@ class InteractiveGuide {
   }
 
   private async prompt(question: string): Promise<string> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.session.rl.question(question, resolve);
     });
   }

@@ -1,12 +1,12 @@
 //! What is Fragmentation? - TOPAY-Z512 Educational Example
-//! 
+//!
 //! This example explains fragmentation in simple terms and demonstrates
 //! how it enables parallel processing for better performance.
 
-use topayz512::{Result, Hash, Kem};
+use topayz512::{Hash, Kem, Result};
 
 #[cfg(feature = "fragmentation")]
-use topayz512::fragment::{FragmentEngine, Fragment, FRAGMENT_SIZE, MAX_FRAGMENTS};
+use topayz512::fragment::{Fragment, FragmentEngine, FRAGMENT_SIZE, MAX_FRAGMENTS};
 
 fn main() -> Result<()> {
     println!("=== What is Fragmentation in TOPAY-Z512? ===\n");
@@ -40,23 +40,29 @@ fn main() -> Result<()> {
 
         // Step-by-step demonstration
         println!("🔄 HOW IT WORKS (Step-by-Step):");
-        
+
         // Step 1: Create some data
         println!("\n1️⃣  STEP 1: Start with large data");
         let large_data = vec![0x42u8; 1000]; // 1KB of data
         println!("   📊 Original data: {} bytes", large_data.len());
-        println!("   📝 Data preview: {:02X} {:02X} {:02X} {:02X}...", 
-                 large_data[0], large_data[1], large_data[2], large_data[3]);
+        println!(
+            "   📝 Data preview: {:02X} {:02X} {:02X} {:02X}...",
+            large_data[0], large_data[1], large_data[2], large_data[3]
+        );
 
         // Step 2: Fragment the data
         println!("\n2️⃣  STEP 2: Break into fragments");
         let fragments = FragmentEngine::fragment_data(&large_data)?;
         println!("   🧩 Number of fragments: {}", fragments.len());
         println!("   📏 Each fragment: ~{} bytes", FRAGMENT_SIZE);
-        
+
         for (i, fragment) in fragments.iter().enumerate() {
-            println!("   Fragment {}: {} bytes, hash: {}...", 
-                     i, fragment.size(), &fragment.hash.to_hex()[..16]);
+            println!(
+                "   Fragment {}: {} bytes, hash: {}...",
+                i,
+                fragment.size(),
+                &fragment.hash.to_hex()[..16]
+            );
         }
 
         // Step 3: Process in parallel (simulation)
@@ -75,52 +81,64 @@ fn main() -> Result<()> {
         println!("\n🔐 REAL-WORLD EXAMPLE: KEM Fragmentation");
         let (public_key, _secret_key) = Kem::keygen();
         println!("   🔑 Generated KEM key pair");
-        println!("   📊 Public key size: {} bytes", public_key.as_bytes().len());
-        
+        println!(
+            "   📊 Public key size: {} bytes",
+            public_key.as_bytes().len()
+        );
+
         let fragmented_kem = FragmentEngine::fragment_kem_encapsulation(&public_key)?;
         println!("   🧩 KEM fragments: {}", fragmented_kem.fragments.len());
-        println!("   🔒 Combined hash: {}...", &fragmented_kem.combined_hash.to_hex()[..32]);
+        println!(
+            "   🔒 Combined hash: {}...",
+            &fragmented_kem.combined_hash.to_hex()[..32]
+        );
 
         // Performance comparison
         println!("\n⚡ PERFORMANCE COMPARISON:");
         let test_data = vec![0xAAu8; 4096]; // 4KB data
-        
+
         // Sequential processing
         let start = std::time::Instant::now();
         let _sequential_hash = Hash::new(&test_data);
         let sequential_time = start.elapsed();
-        
+
         // Parallel processing (simulated)
         let start = std::time::Instant::now();
         let fragmented = FragmentEngine::fragment_hash_operation(&test_data)?;
         let _parallel_hash = FragmentEngine::parallel_hash_compute(&fragmented)?;
         let parallel_time = start.elapsed();
-        
+
         println!("   📊 Data size: {} bytes", test_data.len());
         println!("   🐌 Sequential: {:?}", sequential_time);
         println!("   🚀 Parallel: {:?}", parallel_time);
-        
+
         if parallel_time < sequential_time {
-            let improvement = ((sequential_time.as_nanos() as f64 / parallel_time.as_nanos() as f64) - 1.0) * 100.0;
+            let improvement =
+                ((sequential_time.as_nanos() as f64 / parallel_time.as_nanos() as f64) - 1.0)
+                    * 100.0;
             println!("   📈 Improvement: {:.1}%", improvement);
         }
 
         // Mobile device simulation
         println!("\n📱 MOBILE DEVICE SIMULATION:");
         let mobile_data_sizes = [100, 500, 1000, 5000];
-        
+
         for size in mobile_data_sizes.iter() {
             let latency = FragmentEngine::estimate_mobile_latency(*size);
             let should_fragment = FragmentEngine::should_fragment(*size);
-            println!("   {} bytes → {}ms latency, fragment: {}", 
-                     size, latency, if should_fragment { "YES" } else { "NO" });
+            println!(
+                "   {} bytes → {}ms latency, fragment: {}",
+                size,
+                latency,
+                if should_fragment { "YES" } else { "NO" }
+            );
         }
 
         // Fragment integrity
         println!("\n🛡️  FRAGMENT INTEGRITY:");
         let mut test_fragment = Fragment::new(0, 1, vec![1, 2, 3, 4, 5]);
         println!("   ✅ Original fragment valid: {}", test_fragment.verify());
-        
+
         // Simulate corruption
         test_fragment.data[0] = 99;
         println!("   ❌ Corrupted fragment valid: {}", test_fragment.verify());
@@ -131,10 +149,13 @@ fn main() -> Result<()> {
         let fragment = Fragment::new(0, 3, vec![0x10, 0x20, 0x30]);
         let serialized = fragment.to_bytes();
         let deserialized = Fragment::from_bytes(&serialized)?;
-        
+
         println!("   📦 Fragment serialized: {} bytes", serialized.len());
         println!("   📨 Network transmission ready");
-        println!("   📥 Deserialization success: {}", fragment == deserialized);
+        println!(
+            "   📥 Deserialization success: {}",
+            fragment == deserialized
+        );
 
         println!("\n🌟 FRAGMENTATION BENEFITS:");
         println!("   • 40% higher throughput through parallel processing");
