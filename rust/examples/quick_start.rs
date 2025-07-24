@@ -24,7 +24,7 @@ fn main() {
     println!("2. Hashing:");
     let message = b"Hello, TOPAY-Z512!";
     let hash = Hash::new(message);
-    println!("   Message: {:?}", std::str::from_utf8(message).unwrap());
+    println!("   Message: {}", std::str::from_utf8(message).unwrap());
     println!("   Hash (first 32 chars): {}\n", &hash.to_hex()[..32]);
 
     // 3. Key Encapsulation Mechanism
