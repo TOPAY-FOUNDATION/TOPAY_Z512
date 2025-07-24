@@ -210,7 +210,7 @@ fn test_performance_characteristics() {
     let keypair_time = start.elapsed();
     
     let start = Instant::now();
-    
+
     // KEM operations should be reasonable
     for _ in 0..5 {
         let (public_key, secret_key) = Kem::keygen();
@@ -218,91 +218,99 @@ fn test_performance_characteristics() {
         let _ = Kem::decapsulate(&secret_key, &ciphertext);
     }
     let kem_time = start.elapsed();
-    
+
     let start = Instant::now();
-    
+
     // Hash operations should be fast
     for i in 0..100 {
         let data = format!("test data {}", i);
         let _ = Hash::new(data.as_bytes());
     }
     let hash_time = start.elapsed();
-    
+
     println!("Performance test results:");
     println!("  10 keypair generations: {:?}", keypair_time);
     println!("  5 complete KEM cycles: {:?}", kem_time);
     println!("  100 hash operations: {:?}", hash_time);
-    
+
     // Ensure operations are reasonably fast (these are generous limits)
     assert!(keypair_time.as_millis() < 1000); // 1 second for 10 operations
     assert!(kem_time.as_millis() < 2000); // 2 seconds for 5 operations
     assert!(hash_time.as_millis() < 100); // 100ms for 100 operations
-    
+
     println!("Performance characteristics test passed");
 }
 
 #[test]
 fn test_memory_safety() {
     // Test operations that could cause memory issues
-    
+
     // Large data handling
     let large_data = vec![0u8; 1_000_000]; // 1MB
     let hash = Hash::new(&large_data);
     assert_eq!(hash.to_bytes().len(), 64);
-    
+
     // Many small operations
     for i in 0..1000 {
         let data = format!("iteration {}", i);
         let _hash = Hash::new(data.as_bytes());
     }
-    
+
     // Nested operations
     let mut current_hash = Hash::new(b"start");
     for i in 0..100 {
         let data = format!("round {}", i);
         current_hash = Hash::combine(&current_hash.to_bytes(), data.as_bytes());
     }
-    
+
     println!("Memory safety test passed");
 }
 
 #[test]
 fn test_blockchain_simulation() {
     // Simulate a simplified blockchain scenario
-    
+
     // Genesis block
     let genesis_data = b"TOPAY Genesis Block";
     let genesis_hash = Hash::new(genesis_data);
-    
+
     // Validator key pairs
     let validator1 = KeyPair::generate();
     let validator2 = KeyPair::generate();
     let validator3 = KeyPair::generate();
-    
+
     // Transaction simulation
     let mut previous_hash = genesis_hash;
-    
+
     for block_num in 1..=10 {
         // Create block data
-        let block_data = format!("Block {} with previous hash {}", block_num, previous_hash.to_hex());
-        
+        let block_data = format!(
+            "Block {} with previous hash {}",
+            block_num,
+            previous_hash.to_hex()
+        );
+
         // Hash the block
         let block_hash = Hash::combine(&previous_hash.to_bytes(), block_data.as_bytes());
-        
+
         // Simulate validator consensus (simplified)
         let validator_hashes = [
             Hash::combine(&block_hash.to_bytes(), &validator1.public_key().to_bytes()),
             Hash::combine(&block_hash.to_bytes(), &validator2.public_key().to_bytes()),
             Hash::combine(&block_hash.to_bytes(), &validator3.public_key().to_bytes()),
         ];
-        
+
         // Combine validator signatures
-        let consensus_hash = Hash::concat(&[&validator_hashes[0], &validator_hashes[1], &validator_hashes[2]]);
-        
+        let consensus_hash = Hash::concat(&[
+            &validator_hashes[0],
+            &validator_hashes[1],
+            &validator_hashes[2],
+        ]);
+
         let consensus_hex = consensus_hash.to_hex();
         println!("Block {}: {}", block_num, &consensus_hex[..16]);
         previous_hash = consensus_hash;
     }
-    
+
     println!("Blockchain simulation test passed");
 }

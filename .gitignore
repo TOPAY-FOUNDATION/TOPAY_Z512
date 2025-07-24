@@ -116,6 +116,7 @@ Thumbs.db
 build/
 dist/
 out/
+git-tests/
 
 # CI/CD artifacts
 .github/workflows/artifacts/
