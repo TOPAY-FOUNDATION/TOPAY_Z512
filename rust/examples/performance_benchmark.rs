@@ -48,9 +48,7 @@ fn benchmark_hash_operations() {
         let per_op = elapsed / iterations;
         let throughput = (size as f64 * iterations as f64) / elapsed.as_secs_f64() / 1_000_000.0;
 
-        println!(
-            "   {size} bytes: {per_op:?} per hash, {throughput:.2} MB/s throughput"
-        );
+        println!("   {size} bytes: {per_op:?} per hash, {throughput:.2} MB/s throughput");
     }
 
     // Test hex operations
@@ -112,9 +110,7 @@ fn benchmark_key_operations() {
     }
     let derivation_time = start.elapsed() / iterations;
 
-    println!(
-        "   Public key derivation: {derivation_time:?} per operation"
-    );
+    println!("   Public key derivation: {derivation_time:?} per operation");
     println!();
 }
 
@@ -240,15 +236,9 @@ fn benchmark_feature_detection() {
     let thread_count = features::optimal_thread_count();
     let thread_time = start.elapsed();
 
-    println!(
-        "   SIMD support: {has_simd} (detected in {simd_time:?})"
-    );
-    println!(
-        "   Hardware RNG: {has_hw_rng} (detected in {rng_time:?})"
-    );
-    println!(
-        "   Optimal threads: {thread_count} (detected in {thread_time:?})"
-    );
+    println!("   SIMD support: {has_simd} (detected in {simd_time:?})");
+    println!("   Hardware RNG: {has_hw_rng} (detected in {rng_time:?})");
+    println!("   Optimal threads: {thread_count} (detected in {thread_time:?})");
 
     // Utility function benchmarks
     let data1 = [1, 2, 3, 4, 5];

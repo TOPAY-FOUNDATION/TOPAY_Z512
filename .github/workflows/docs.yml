@@ -47,7 +47,7 @@ jobs:
     
     - name: Generate TypeDoc documentation
       working-directory: ./js
-      run: npx typedoc src/index.ts --out docs --theme default
+      run: npm run docs
     
     - name: Upload JavaScript docs
       uses: actions/upload-artifact@v3
@@ -113,6 +113,7 @@ jobs:
       contents: read
       pages: write
       id-token: write
+      actions: read
     
     environment:
       name: github-pages

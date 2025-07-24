@@ -97,9 +97,7 @@ fn main() -> Result<()> {
         for size in test_sizes.iter() {
             let latency = FragmentEngine::estimate_mobile_latency(*size);
             let should_fragment = FragmentEngine::should_fragment(*size);
-            println!(
-                "   {size} bytes: {latency}ms latency, fragment: {should_fragment}"
-            );
+            println!("   {size} bytes: {latency}ms latency, fragment: {should_fragment}");
         }
         println!();
 

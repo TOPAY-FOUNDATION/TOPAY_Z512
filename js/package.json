@@ -13,7 +13,7 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
-    "docs": "echo 'Documentation generation placeholder - TypeDoc not configured yet'",
+    "docs": "typedoc --options typedoc.json",
     "benchmark": "node dist/benchmarks/index.js",
     "example:quick-start": "node dist/examples/quick-start.js",
     "example:keypair": "node dist/examples/keypair.js",
@@ -65,6 +65,7 @@
     "jest": "^29.5.0",
     "prettier": "^3.0.0",
     "ts-jest": "^29.1.0",
+    "typedoc": "^0.25.0",
     "typescript": "^5.0.0"
   }
 }
