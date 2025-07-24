@@ -1,6 +1,6 @@
 {
   "name": "@topayfoundation/topayz512",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Quantum-safe cryptographic primitives for the TOPAY Foundation blockchain ecosystem",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -45,6 +45,8 @@
   },
   "files": [
     "dist/**/*",
+    "!dist/test/**/*",
+    "!dist/**/*.test.*",
     "README.md",
     "LICENSE"
   ],
@@ -53,7 +55,7 @@
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",
-    "@types/node": "^20.0.0",
+    "@types/node": "^20.19.9",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
@@ -63,7 +65,5 @@
     "prettier": "^3.0.0",
     "ts-jest": "^29.1.0",
     "typescript": "^5.0.0"
-  },
-  "dependencies": {
   }
 }
