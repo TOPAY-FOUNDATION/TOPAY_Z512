@@ -137,7 +137,7 @@ impl PrivateKey {
     pub fn to_hex(&self) -> String {
         let mut hex = String::with_capacity(PRIVATE_KEY_SIZE * 2);
         for &byte in &self.bytes {
-            hex.push_str(&format!("{:02x}", byte));
+            hex.push_str(&format!("{byte:02x}"));
         }
         hex
     }
@@ -149,7 +149,7 @@ impl PrivateKey {
         let mut public_bytes = [0u8; PUBLIC_KEY_SIZE];
 
         // Use a more sophisticated derivation function
-        for i in 0..PUBLIC_KEY_SIZE {
+        for (i, public_byte) in public_bytes.iter_mut().enumerate().take(PUBLIC_KEY_SIZE) {
             let private_idx = i % PRIVATE_KEY_SIZE;
             let base = self.bytes[private_idx];
 
@@ -160,7 +160,7 @@ impl PrivateKey {
                 .wrapping_mul(i as u8)
                 .wrapping_add(0x5A);
 
-            public_bytes[i] = mixed;
+            *public_byte = mixed;
         }
 
         PublicKey::from_bytes(public_bytes)
@@ -232,7 +232,7 @@ impl PublicKey {
     pub fn to_hex(&self) -> String {
         let mut hex = String::with_capacity(PUBLIC_KEY_SIZE * 2);
         for &byte in &self.bytes {
-            hex.push_str(&format!("{:02x}", byte));
+            hex.push_str(&format!("{byte:02x}"));
         }
         hex
     }

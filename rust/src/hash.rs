@@ -78,11 +78,11 @@ impl Hash {
         let hex_bytes = hex.as_bytes();
 
         // Optimized hex parsing
-        for i in 0..HASH_SIZE {
+        for (i, byte) in bytes.iter_mut().enumerate().take(HASH_SIZE) {
             let idx = i * 2;
             let high = Self::hex_char_to_byte(hex_bytes[idx])?;
             let low = Self::hex_char_to_byte(hex_bytes[idx + 1])?;
-            bytes[i] = (high << 4) | low;
+            *byte = (high << 4) | low;
         }
 
         Ok(Hash { bytes })
@@ -221,8 +221,8 @@ impl Hash {
     #[inline]
     pub fn xor(&self, other: &Hash) -> Hash {
         let mut result = [0u8; HASH_SIZE];
-        for i in 0..HASH_SIZE {
-            result[i] = self.bytes[i] ^ other.bytes[i];
+        for (i, result_byte) in result.iter_mut().enumerate().take(HASH_SIZE) {
+            *result_byte = self.bytes[i] ^ other.bytes[i];
         }
         Hash { bytes: result }
     }

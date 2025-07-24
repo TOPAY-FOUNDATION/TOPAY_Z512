@@ -30,13 +30,13 @@ pub enum TopayzError {
 impl fmt::Display for TopayzError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TopayzError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
-            TopayzError::InvalidKey(msg) => write!(f, "Invalid key: {}", msg),
-            TopayzError::InvalidHash(msg) => write!(f, "Invalid hash: {}", msg),
-            TopayzError::CryptoError(msg) => write!(f, "Cryptographic error: {}", msg),
-            TopayzError::SerializationError(msg) => write!(f, "Serialization error: {}", msg),
-            TopayzError::RandomError(msg) => write!(f, "Random error: {}", msg),
-            TopayzError::FragmentationError(msg) => write!(f, "Fragmentation error: {}", msg),
+            TopayzError::InvalidInput(msg) => write!(f, "Invalid input: {msg}"),
+            TopayzError::InvalidKey(msg) => write!(f, "Invalid key: {msg}"),
+            TopayzError::InvalidHash(msg) => write!(f, "Invalid hash: {msg}"),
+            TopayzError::CryptoError(msg) => write!(f, "Cryptographic error: {msg}"),
+            TopayzError::SerializationError(msg) => write!(f, "Serialization error: {msg}"),
+            TopayzError::RandomError(msg) => write!(f, "Random error: {msg}"),
+            TopayzError::FragmentationError(msg) => write!(f, "Fragmentation error: {msg}"),
         }
     }
 }
@@ -46,6 +46,6 @@ impl std::error::Error for TopayzError {}
 
 impl From<hex::FromHexError> for TopayzError {
     fn from(err: hex::FromHexError) -> Self {
-        TopayzError::SerializationError(format!("Hex decode error: {}", err))
+        TopayzError::SerializationError(format!("Hex decode error: {err}"))
     }
 }

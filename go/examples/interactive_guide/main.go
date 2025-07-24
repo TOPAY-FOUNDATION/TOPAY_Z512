@@ -3,11 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/TOPAY-FOUNDATION/TOPAY_Z512/go"
 	"log"
 	"os"
 	"strconv"
 	"time"
+
+	topayz512 "github.com/TOPAY-FOUNDATION/TOPAY_Z512/go"
 )
 
 func main() {

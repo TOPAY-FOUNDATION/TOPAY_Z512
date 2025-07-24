@@ -212,6 +212,12 @@ pub mod bench {
         start_usage: usize,
     }
 
+    impl Default for MemoryProfiler {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
     impl MemoryProfiler {
         /// Create a new memory profiler
         pub fn new() -> Self {
@@ -224,7 +230,7 @@ pub mod bench {
         pub fn report(&self, operation: &str) {
             let current_usage = get_memory_usage();
             let delta = current_usage.saturating_sub(self.start_usage);
-            println!("{}: Memory delta: {} bytes", operation, delta);
+            println!("{operation}: Memory delta: {delta} bytes");
         }
     }
 

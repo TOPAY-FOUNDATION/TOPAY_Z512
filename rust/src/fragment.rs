@@ -59,12 +59,11 @@ impl FragmentEngine {
         }
 
         let data_len = data.len();
-        let total_fragments = (data_len + FRAGMENT_SIZE - 1) / FRAGMENT_SIZE;
+        let total_fragments = data_len.div_ceil(FRAGMENT_SIZE);
 
         if total_fragments > MAX_FRAGMENTS {
             return Err(TopayzError::FragmentationError(format!(
-                "Data too large: {} fragments exceeds maximum of {}",
-                total_fragments, MAX_FRAGMENTS
+                "Data too large: {total_fragments} fragments exceeds maximum of {MAX_FRAGMENTS}"
             )));
         }
 
@@ -116,8 +115,7 @@ impl FragmentEngine {
             let idx = fragment.index as usize;
             if idx >= total_fragments {
                 return Err(TopayzError::FragmentationError(format!(
-                    "Fragment index {} out of bounds",
-                    idx
+                    "Fragment index {idx} out of bounds"
                 )));
             }
             fragment_map[idx] = Some(fragment);
@@ -127,23 +125,22 @@ impl FragmentEngine {
         for (expected_index, fragment_opt) in fragment_map.iter().enumerate() {
             let fragment = fragment_opt.ok_or_else(|| {
                 TopayzError::FragmentationError(format!(
-                    "Missing fragment at index {}",
-                    expected_index
+                    "Missing fragment at index {expected_index}"
                 ))
             })?;
 
             if fragment.total != total_fragments as u32 {
                 return Err(TopayzError::FragmentationError(format!(
-                    "Fragment total mismatch: expected {}, got {}",
-                    total_fragments, fragment.total
+                    "Fragment total mismatch: expected {total_fragments}, got {}",
+                    fragment.total
                 )));
             }
 
             // Fast integrity check
             if !fragment.verify_fast() {
                 return Err(TopayzError::FragmentationError(format!(
-                    "Fragment {} integrity verification failed",
-                    fragment.index
+                    "Fragment {index} integrity verification failed",
+                    index = fragment.index
                 )));
             }
 
@@ -241,7 +238,7 @@ impl FragmentEngine {
             return 5; // Very fast for small data
         }
 
-        let fragment_count = (data_size + FRAGMENT_SIZE - 1) / FRAGMENT_SIZE;
+        let fragment_count = data_size.div_ceil(FRAGMENT_SIZE);
 
         // Improved latency model based on real mobile performance
         let base_latency_per_fragment = 1; // 1ms per fragment (optimized)
@@ -250,7 +247,7 @@ impl FragmentEngine {
         // Parallel processing with realistic core count
         let available_cores = core::cmp::min(fragment_count, 6); // Mobile devices typically have 4-8 cores
         let parallel_time =
-            (fragment_count * base_latency_per_fragment + available_cores - 1) / available_cores;
+            (fragment_count * base_latency_per_fragment).div_ceil(available_cores);
 
         (setup_overhead + parallel_time) as u64
     }
@@ -258,7 +255,7 @@ impl FragmentEngine {
     /// Optimized fragmentation decision with better heuristics
     pub fn should_fragment(data_size: usize) -> bool {
         // More sophisticated decision based on data size and processing overhead
-        data_size >= MIN_FRAGMENT_THRESHOLD && data_size > FRAGMENT_SIZE * 3 // Only fragment if we get at least 3 fragments
+        data_size > FRAGMENT_SIZE * 3 // Only fragment if we get at least 3 fragments
     }
 
     /// Estimate throughput improvement from fragmentation
@@ -267,7 +264,7 @@ impl FragmentEngine {
             return 1.0; // No improvement for small data
         }
 
-        let fragment_count = (data_size + FRAGMENT_SIZE - 1) / FRAGMENT_SIZE;
+        let fragment_count = data_size.div_ceil(FRAGMENT_SIZE);
         let parallel_factor = core::cmp::min(fragment_count, 6) as f64;
 
         // Account for overhead but show realistic improvement

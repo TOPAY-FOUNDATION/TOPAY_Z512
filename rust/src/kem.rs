@@ -263,7 +263,7 @@ impl PublicKey {
     pub fn to_hex(&self) -> String {
         let mut hex = String::with_capacity(128);
         for &byte in &self.bytes {
-            hex.push_str(&format!("{:02x}", byte));
+            hex.push_str(&format!("{byte:02x}"));
         }
         hex
     }
@@ -315,7 +315,7 @@ impl SecretKey {
     pub fn to_hex(&self) -> String {
         let mut hex = String::with_capacity(128);
         for &byte in &self.bytes {
-            hex.push_str(&format!("{:02x}", byte));
+            hex.push_str(&format!("{byte:02x}"));
         }
         hex
     }
@@ -377,7 +377,7 @@ impl Ciphertext {
     pub fn to_hex(&self) -> String {
         let mut hex = String::with_capacity(128);
         for &byte in &self.bytes {
-            hex.push_str(&format!("{:02x}", byte));
+            hex.push_str(&format!("{byte:02x}"));
         }
         hex
     }
@@ -423,7 +423,7 @@ impl SharedSecret {
     pub fn to_hex(&self) -> String {
         let mut hex = String::with_capacity(128);
         for &byte in &self.bytes {
-            hex.push_str(&format!("{:02x}", byte));
+            hex.push_str(&format!("{byte:02x}"));
         }
         hex
     }
