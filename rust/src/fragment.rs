@@ -246,8 +246,7 @@ impl FragmentEngine {
 
         // Parallel processing with realistic core count
         let available_cores = core::cmp::min(fragment_count, 6); // Mobile devices typically have 4-8 cores
-        let parallel_time =
-            (fragment_count * base_latency_per_fragment).div_ceil(available_cores);
+        let parallel_time = (fragment_count * base_latency_per_fragment).div_ceil(available_cores);
 
         (setup_overhead + parallel_time) as u64
     }

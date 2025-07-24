@@ -67,7 +67,6 @@ js/.nyc_output/
 js/*.tsbuildinfo
 
 # JavaScript package manager files
-js/package-lock.json
 js/yarn.lock
 
 # =============================================================================
