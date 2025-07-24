@@ -1,13 +1,15 @@
 package main
+
 import (
 	"bufio"
 	"fmt"
+	"github.com/TOPAY-FOUNDATION/TOPAY_Z512/go"
 	"log"
 	"os"
 	"strconv"
 	"time"
-	"github.com/TOPAY-FOUNDATION/TOPAY_Z512/go"
 )
+
 func main() {
 	fmt.Println("=== TOPAY-Z512 Go Implementation - Interactive Guide ===")
 	fmt.Println()
@@ -118,12 +120,12 @@ func demonstrateKeyPairOperations(scanner *bufio.Scanner) {
 			fmt.Printf("   Seed: %s\n", seedInput)
 			fmt.Printf("   Private Key: %s\n", deterministicPrivate.String())
 			fmt.Printf("   Public Key:  %s\n", deterministicPublic.String())
-			
+
 			// Generate again with same seed
 			deterministicPrivate2, deterministicPublic2, _ := topayz512.GenerateKeyPairFromSeed(seed)
-			fmt.Printf("   Reproducible: %v\n", 
+			fmt.Printf("   Reproducible: %v\n",
 				topayz512.PrivateKeyEqual(deterministicPrivate, deterministicPrivate2) &&
-				topayz512.PublicKeyEqual(deterministicPublic, deterministicPublic2))
+					topayz512.PublicKeyEqual(deterministicPublic, deterministicPublic2))
 		}
 		fmt.Println()
 	}
@@ -157,7 +159,7 @@ func demonstrateKeyPairOperations(scanner *bufio.Scanner) {
 	} else {
 		fmt.Printf("   Generated %d key pairs in %v\n", len(privateKeys), duration)
 		fmt.Printf("   Rate: %.2f keys/sec\n", float64(batchSize)/duration.Seconds())
-		
+
 		// Verify a few
 		validCount := 0
 		checkCount := min(5, batchSize)
@@ -220,8 +222,8 @@ func demonstrateKEMOperations(scanner *bufio.Scanner) {
 	for i := 0; i < 3; i++ {
 		ct, ss, _ := topayz512.KEMEncapsulate(publicKey)
 		ss2, _ := topayz512.KEMDecapsulate(secretKey, ct)
-		fmt.Printf("   Encapsulation %d: Secrets match = %v, Different ciphertext = %v\n", 
-			i+1, 
+		fmt.Printf("   Encapsulation %d: Secrets match = %v, Different ciphertext = %v\n",
+			i+1,
 			topayz512.SharedSecretEqual(ss, ss2),
 			!topayz512.CiphertextEqual(ciphertext, ct))
 	}
@@ -244,9 +246,9 @@ func demonstrateKEMOperations(scanner *bufio.Scanner) {
 				log.Printf("Failed decapsulation with context: %v", err)
 			} else {
 				fmt.Printf("   Context: %s\n", contextInput)
-				fmt.Printf("   Context affects result: %v\n", 
+				fmt.Printf("   Context affects result: %v\n",
 					!topayz512.SharedSecretEqual(sharedSecret1, contextSecret1))
-				fmt.Printf("   Context secrets match: %v\n", 
+				fmt.Printf("   Context secrets match: %v\n",
 					topayz512.SharedSecretEqual(contextSecret1, contextSecret2))
 			}
 		}
@@ -297,7 +299,7 @@ func demonstrateFragmentationOperations(scanner *bufio.Scanner) {
 		fmt.Printf("   Fragments: %d\n", len(result.Fragments))
 		fmt.Printf("   Fragment size: %d bytes each\n", len(result.Fragments[0].Data))
 		fmt.Printf("   Time: %v\n", seqDuration)
-		fmt.Printf("   Throughput: %.2f MB/s\n", 
+		fmt.Printf("   Throughput: %.2f MB/s\n",
 			float64(dataSize)/seqDuration.Seconds()/(1024*1024))
 	}
 	fmt.Println()
@@ -312,7 +314,7 @@ func demonstrateFragmentationOperations(scanner *bufio.Scanner) {
 	} else {
 		fmt.Printf("   Fragments: %d\n", len(parResult.Fragments))
 		fmt.Printf("   Time: %v\n", parDuration)
-		fmt.Printf("   Throughput: %.2f MB/s\n", 
+		fmt.Printf("   Throughput: %.2f MB/s\n",
 			float64(dataSize)/parDuration.Seconds()/(1024*1024))
 		fmt.Printf("   Speedup: %.2fx\n", float64(seqDuration)/float64(parDuration))
 	}
@@ -345,21 +347,21 @@ func demonstrateFragmentationOperations(scanner *bufio.Scanner) {
 	fmt.Println("5. Fragment Integrity:")
 	if len(result.Fragments) > 0 {
 		fragment := result.Fragments[0]
-		fmt.Printf("   Original fragment valid: %v\n", 
+		fmt.Printf("   Original fragment valid: %v\n",
 			topayz512.ValidateFragmentIntegrity(fragment))
-		
+
 		// Corrupt the fragment
 		corruptedFragment := fragment
 		corruptedFragment.Data[0] ^= 0xFF
-		fmt.Printf("   Corrupted fragment valid: %v\n", 
+		fmt.Printf("   Corrupted fragment valid: %v\n",
 			topayz512.ValidateFragmentIntegrity(corruptedFragment))
-		
+
 		// Attempt repair
 		repairedFragment, err := topayz512.RepairFragment(corruptedFragment, testData, len(result.Fragments[0].Data))
 		if err != nil {
 			fmt.Printf("   Repair failed: %v\n", err)
 		} else {
-			fmt.Printf("   Repaired fragment valid: %v\n", 
+			fmt.Printf("   Repaired fragment valid: %v\n",
 				topayz512.ValidateFragmentIntegrity(repairedFragment))
 		}
 	}
@@ -376,7 +378,7 @@ func demonstratePerformanceComparison(scanner *bufio.Scanner) {
 	// Hash performance
 	fmt.Println("1. Hash Performance:")
 	dataSizes := []int{1024, 4096, 16384, 65536} // 1KB to 64KB
-	
+
 	for _, size := range dataSizes {
 		benchmark := topayz512.BenchmarkHash(size, 1000)
 		fmt.Printf("   %2dKB: %8.2f MB/s, %6.0f hashes/sec, %6d ns/hash\n",
@@ -407,7 +409,7 @@ func demonstratePerformanceComparison(scanner *bufio.Scanner) {
 	// Fragmentation performance
 	fmt.Println("4. Fragmentation Performance:")
 	fragSizes := []int{4096, 16384, 65536} // 4KB to 64KB
-	
+
 	for _, size := range fragSizes {
 		benchmark := topayz512.BenchmarkFragmentation(size)
 		fmt.Printf("   %2dKB: %8.2f MB/s, Frag=%.2fms, Recon=%.2fms, Speedup=%.2fx\n",
@@ -430,13 +432,13 @@ func demonstrateAdvancedFeatures(scanner *bufio.Scanner) {
 	// Memory profiling
 	fmt.Println("1. Memory Profiling:")
 	profiler := topayz512.NewMemoryProfiler()
-	
+
 	// Perform some operations
 	for i := 0; i < 100; i++ {
 		data := make([]byte, 1024)
 		_ = topayz512.ComputeHash(data)
 	}
-	
+
 	report := profiler.Report()
 	fmt.Printf("   Memory usage for 100 hash operations: %s\n", report)
 	fmt.Println()
@@ -444,22 +446,22 @@ func demonstrateAdvancedFeatures(scanner *bufio.Scanner) {
 	// Batch operations comparison
 	fmt.Println("2. Batch vs Individual Operations:")
 	batchSize := 50
-	
+
 	// Individual key generation
 	start := time.Now()
 	for i := 0; i < batchSize; i++ {
 		_, _, _ = topayz512.GenerateKeyPair()
 	}
 	individualDuration := time.Since(start)
-	
+
 	// Batch key generation
 	start = time.Now()
 	_, _, _ = topayz512.BatchGenerateKeyPairs(batchSize)
 	batchDuration := time.Since(start)
-	
-	fmt.Printf("   Individual: %v (%.2f keys/sec)\n", 
+
+	fmt.Printf("   Individual: %v (%.2f keys/sec)\n",
 		individualDuration, float64(batchSize)/individualDuration.Seconds())
-	fmt.Printf("   Batch: %v (%.2f keys/sec)\n", 
+	fmt.Printf("   Batch: %v (%.2f keys/sec)\n",
 		batchDuration, float64(batchSize)/batchDuration.Seconds())
 	fmt.Printf("   Batch speedup: %.2fx\n", float64(individualDuration)/float64(batchDuration))
 	fmt.Println()
@@ -472,20 +474,20 @@ func demonstrateAdvancedFeatures(scanner *bufio.Scanner) {
 	if seedInput == "" {
 		seedInput = "master_seed_for_hd_wallet_demonstration"
 	}
-	
+
 	seed := []byte(seedInput)
 	depth := 10
-	
+
 	start = time.Now()
 	hdWallet, err := topayz512.GenerateHDWallet(seed, depth)
 	hdDuration := time.Since(start)
-	
+
 	if err != nil {
 		log.Printf("Failed to generate HD wallet: %v", err)
 	} else {
 		fmt.Printf("   Generated %d key pairs in %v\n", len(hdWallet), hdDuration)
 		fmt.Printf("   Rate: %.2f keys/sec\n", float64(depth)/hdDuration.Seconds())
-		
+
 		// Show first few keys
 		fmt.Println("   First 3 key pairs:")
 		for i := 0; i < min(3, len(hdWallet)); i++ {
@@ -499,19 +501,19 @@ func demonstrateAdvancedFeatures(scanner *bufio.Scanner) {
 	// Serialization formats
 	fmt.Println("4. Serialization Formats:")
 	privateKey, publicKey, _ := topayz512.GenerateKeyPair()
-	
+
 	// Bytes format
 	privateBytes := privateKey.Bytes()
 	publicBytes := publicKey.Bytes()
 	fmt.Printf("   Private key bytes: %d bytes\n", len(privateBytes))
 	fmt.Printf("   Public key bytes: %d bytes\n", len(publicBytes))
-	
+
 	// Hex format
 	privateHex := privateKey.String()
 	publicHex := publicKey.String()
 	fmt.Printf("   Private key hex: %d characters\n", len(privateHex))
 	fmt.Printf("   Public key hex: %d characters\n", len(publicHex))
-	
+
 	// String format
 	privateStr := privateKey.String()
 	publicStr := publicKey.String()
@@ -523,7 +525,7 @@ func demonstrateAdvancedFeatures(scanner *bufio.Scanner) {
 	fmt.Println("5. Security Features:")
 	fmt.Printf("   Constant-time equality: %v\n", true) // Implemented in library
 	fmt.Printf("   Secure random generation: %v\n", topayz512.HasHardwareRNG())
-	fmt.Printf("   Memory zeroing: %v\n", true) // Implemented in SecureErase functions
+	fmt.Printf("   Memory zeroing: %v\n", true)          // Implemented in SecureErase functions
 	fmt.Printf("   Side-channel resistance: %v\n", true) // Built into the design
 	fmt.Println()
 }
