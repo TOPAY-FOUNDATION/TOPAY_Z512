@@ -15,7 +15,7 @@ A high-performance, quantum-resistant cryptographic library implementing the TOP
 ## Installation
 
 ```bash
-npm install @topay/topayz512
+npm i @topayfoundation/topayz512
 ```
 
 ## Quick Start
